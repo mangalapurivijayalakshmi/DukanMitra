@@ -34,6 +34,28 @@ async def pending_credit() -> list:
     """List customers who owe money (udhar), highest first."""
     return await sync_to_async(tools.pending_credit)()
 
+@mcp.tool()
+async def predict_stockout(product_name: str) -> dict:
+    """Estimate how many days the current stock will last, based on last 7 days of sales."""
+    return await sync_to_async(tools.predict_stockout)(product_name)
+
+
+@mcp.tool()
+async def draft_reorder() -> list:
+    """Create draft supplier orders for all low-stock products. Does NOT send anything; owner must approve."""
+    return await sync_to_async(tools.draft_reorder)()
+
+
+@mcp.tool()
+async def approve_reorder(order_id: int) -> dict:
+    """Approve a draft reorder ONLY after the shop owner explicitly confirms."""
+    return await sync_to_async(tools.approve_reorder)(order_id)
+
+
+@mcp.tool()
+async def daily_summary() -> dict:
+    """Today's sales, low-stock items and pending credit in one summary."""
+    return await sync_to_async(tools.daily_summary)()
 
 if __name__ == "__main__":
     mcp.run(transport="streamable-http")

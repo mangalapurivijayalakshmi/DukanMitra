@@ -41,3 +41,18 @@ class Customer(models.Model):
 
     def __str__(self):
         return f"{self.name} - ₹{self.balance_due}"
+
+class ReorderOrder(models.Model):
+    STATUS_CHOICES = [
+        ("draft", "Draft"),
+        ("approved", "Approved"),
+        ("cancelled", "Cancelled"),
+    ]
+    supplier = models.ForeignKey(Supplier, on_delete=models.CASCADE)
+    items_json = models.TextField()  # [{"product": "బియ్యం", "quantity": 40, "unit": "kg"}]
+    message = models.TextField(blank=True)  # supplier కి పంపే message
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default="draft")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Order #{self.id} - {self.supplier.name} - {self.status}"
