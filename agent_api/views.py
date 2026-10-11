@@ -2,8 +2,9 @@ import json
 from django.http import JsonResponse
 from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
-from .agent import chat
 from . import tools
+from .agent import chat
+
 
 def home(request):
     return render(request, "chat.html")
@@ -19,8 +20,12 @@ def chat_api(request):
     try:
         reply = chat(session_id, message)
     except Exception as e:
-        reply = f"క్షమించండి, లోపం జరిగింది: {e}"
+        if "429" in str(e):
+            reply = "ప్రస్తుతం AI సేవ పరిమితి అయిపోయింది. కొద్దిసేపటి తర్వాత ప్రయత్నించండి."
+        else:
+            reply = f"క్షమించండి, లోపం జరిగింది: {e}"
     return JsonResponse({"reply": reply})
+
 
 def dashboard_api(request):
     return JsonResponse({
