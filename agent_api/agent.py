@@ -48,8 +48,12 @@ def daily_summary() -> dict:
     """ఈ రోజు అమ్మకాలు, తక్కువ stock, బాకీలు ఒకే summary లో."""
     return tools.daily_summary()
 
+def get_price(product_name: str) -> dict:
+    """ఒక ఉత్పత్తి ధర చెబుతుంది."""
+    return tools.get_price(product_name)
+
 TOOL_LIST = [get_stock, low_stock_items, today_sales, pending_credit,
-             predict_stockout, draft_reorder, approve_reorder, daily_summary]
+             predict_stockout, draft_reorder, approve_reorder, daily_summary, get_price]
 
 _client = None
 _chats = {}   # session_id -> chat (సంభాషణ గుర్తుపెట్టుకోవడానికి)

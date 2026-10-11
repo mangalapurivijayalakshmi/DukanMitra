@@ -126,3 +126,13 @@ def daily_summary() -> dict:
         "low_stock": low_stock_items(),
         "pending_credit": pending_credit(),
     }
+
+def get_price(product_name: str) -> dict:
+    """ఒక ఉత్పత్తి ధర (ఒక యూనిట్ కి)."""
+    p = (
+        Product.objects.filter(telugu_name__icontains=product_name).first()
+        or Product.objects.filter(name__icontains=product_name).first()
+    )
+    if not p:
+        return {"found": False}
+    return {"found": True, "product": p.telugu_name, "price": p.price, "unit": p.unit}
