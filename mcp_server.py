@@ -57,5 +57,11 @@ async def daily_summary() -> dict:
     """Today's sales, low-stock items and pending credit in one summary."""
     return await sync_to_async(tools.daily_summary)()
 
+@mcp.tool()
+async def get_price(product_name: str) -> dict:
+    """Get the unit price of a product. Accepts Telugu or English name."""
+    return await sync_to_async(tools.get_price)(product_name)
+
 if __name__ == "__main__":
     mcp.run(transport="streamable-http")
+    
