@@ -1,12 +1,9 @@
-from django.shortcuts import render
-
-# Create your views here.
 import json
 from django.http import JsonResponse
 from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
 from .agent import chat
-
+from . import tools
 
 def home(request):
     return render(request, "chat.html")
@@ -24,3 +21,10 @@ def chat_api(request):
     except Exception as e:
         reply = f"క్షమించండి, లోపం జరిగింది: {e}"
     return JsonResponse({"reply": reply})
+
+def dashboard_api(request):
+    return JsonResponse({
+        "sales": tools.today_sales(),
+        "low_stock": tools.low_stock_items(),
+        "credit": tools.pending_credit(),
+    })

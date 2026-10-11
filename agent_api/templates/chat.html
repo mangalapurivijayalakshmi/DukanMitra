@@ -5,25 +5,65 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>DukanMitra</title>
 <style>
-  body { font-family: sans-serif; max-width: 640px; margin: 0 auto; padding: 12px; background:#f5f5f5; }
-  h2 { text-align:center; }
-  #log { background:#fff; height:60vh; overflow-y:auto; padding:10px; border-radius:8px; }
-  .me { text-align:right; color:#0b5; margin:8px 0; }
-  .bot { text-align:left; margin:8px 0; white-space:pre-wrap; }
-  #row { display:flex; gap:6px; margin-top:8px; }
-  #msg { flex:1; padding:10px; font-size:16px; }
-  button { padding:10px 14px; font-size:16px; cursor:pointer; }
-  #mic { background:#e33; color:#fff; border:none; border-radius:50%; width:48px; height:48px; }
+  :root { --g:#1b8a4b; --gd:#146c3a; --bg:#f1f8f3; }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family: "Segoe UI", sans-serif; background:var(--bg); color:#222; }
+  header { background:linear-gradient(90deg,var(--gd),var(--g)); color:#fff; padding:14px 20px; display:flex; align-items:center; gap:10px; }
+  header h1 { margin:0; font-size:22px; }
+  header span { opacity:.85; font-size:13px; }
+  .wrap { max-width:1000px; margin:16px auto; padding:0 12px; display:grid; grid-template-columns: 1fr 1.2fr; gap:16px; }
+  @media (max-width:800px){ .wrap{ grid-template-columns:1fr; } }
+  .card { background:#fff; border-radius:14px; padding:14px; box-shadow:0 2px 8px rgba(0,0,0,.08); margin-bottom:14px; }
+  .card h3 { margin:0 0 8px; font-size:15px; color:var(--gd); }
+  .big { font-size:28px; font-weight:700; color:var(--g); }
+  .item { display:flex; justify-content:space-between; padding:5px 0; border-bottom:1px solid #eee; font-size:14px; }
+  .low { color:#c62828; font-weight:600; }
+  #log { height:48vh; overflow-y:auto; padding:6px; }
+  .bubble { max-width:85%; padding:9px 12px; border-radius:14px; margin:6px 0; white-space:pre-wrap; line-height:1.4; font-size:15px; }
+  .me { background:var(--g); color:#fff; margin-left:auto; border-bottom-right-radius:4px; }
+  .bot { background:#e9f5ee; border-bottom-left-radius:4px; }
+  .quick { display:flex; flex-wrap:wrap; gap:6px; margin:8px 0; }
+  .quick button { background:#fff; border:1px solid var(--g); color:var(--gd); border-radius:16px; padding:6px 12px; cursor:pointer; font-size:13px; }
+  .quick button:hover { background:var(--g); color:#fff; }
+  #row { display:flex; gap:6px; }
+  #msg { flex:1; padding:11px; font-size:15px; border:1px solid #ccc; border-radius:10px; }
+  #send { background:var(--g); color:#fff; border:none; border-radius:10px; padding:0 16px; font-size:15px; cursor:pointer; }
+  #mic { background:#e53935; color:#fff; border:none; border-radius:50%; width:44px; height:44px; font-size:18px; cursor:pointer; }
+  #mic.on { animation: pulse 1s infinite; }
+  @keyframes pulse { 50% { box-shadow:0 0 0 8px rgba(229,57,53,.25);} }
 </style>
 </head>
 <body>
-<h2>🛒 DukanMitra</h2>
-<div id="log"></div>
-<div id="row">
-  <input id="msg" placeholder="తెలుగులో అడగండి...">
-  <button id="mic" title="మాట్లాడండి">🎤</button>
-  <button id="send">పంపు</button>
+<header>
+  <div style="font-size:28px">🛒</div>
+  <div><h1>DukanMitra</h1><span>తెలుగు AI దుకాణ సహాయకుడు</span></div>
+</header>
+
+<div class="wrap">
+  <div>
+    <div class="card"><h3>ఈ రోజు అమ్మకాలు</h3>
+      <div class="big" id="sales">₹0</div><div id="count" style="font-size:13px;color:#666"></div></div>
+    <div class="card"><h3>⚠️ తక్కువ నిల్వ</h3><div id="low">...</div></div>
+    <div class="card"><h3>💰 బాకీలు (ఉద్దెర)</h3><div id="credit">...</div></div>
+  </div>
+
+  <div class="card">
+    <h3>💬 అడగండి</h3>
+    <div class="quick">
+      <button data-q="ఈ రోజు సారాంశం చెప్పు">📊 సారాంశం</button>
+      <button data-q="బియ్యం స్టాక్ ఎంత ఉంది? ఎన్ని రోజులు వస్తుంది?">🌾 బియ్యం</button>
+      <button data-q="తక్కువ stock ఉన్నవాటికి supplier కి order తయారు చేయి">📦 ఆర్డర్ తయారు</button>
+      <button data-q="అవును, ఆ ఆర్డర్లను approve చేయి">✅ ఆమోదించు</button>
+    </div>
+    <div id="log"></div>
+    <div id="row">
+      <input id="msg" placeholder="తెలుగులో అడగండి...">
+      <button id="mic" title="మాట్లాడండి">🎤</button>
+      <button id="send">పంపు</button>
+    </div>
+  </div>
 </div>
+
 <script>
 const sid = "s" + Math.random().toString(36).slice(2);
 const log = document.getElementById("log");
@@ -31,37 +71,57 @@ const msg = document.getElementById("msg");
 
 function add(cls, text) {
   const d = document.createElement("div");
-  d.className = cls; d.textContent = text;
-  log.appendChild(d); log.scrollTop = log.scrollHeight;
+  d.className = "bubble " + cls; d.textContent = text;
+  log.appendChild(d); log.scrollTop = log.scrollHeight; return d;
 }
 
-async function send() {
-  const text = msg.value.trim();
+async function loadDash() {
+  try {
+    const d = await (await fetch("/api/dashboard")).json();
+    document.getElementById("sales").textContent = "₹" + (d.sales.total_amount || 0);
+    document.getElementById("count").textContent = d.sales.number_of_sales + " అమ్మకాలు";
+    document.getElementById("low").innerHTML = d.low_stock.length
+      ? d.low_stock.map(i => `<div class="item"><span>${i.product}</span><span class="low">${i.stock} ${i.unit}</span></div>`).join("")
+      : "అన్నీ సరిపడా ఉన్నాయి ✅";
+    document.getElementById("credit").innerHTML = d.credit.length
+      ? d.credit.map(c => `<div class="item"><span>${c.name}</span><span>₹${c.balance_due}</span></div>`).join("")
+      : "బాకీలు లేవు";
+  } catch (e) {}
+}
+
+async function send(text) {
+  text = (text || msg.value).trim();
   if (!text) return;
   add("me", text); msg.value = "";
-  add("bot", "...");
-  const r = await fetch("/api/chat", {
-    method: "POST",
-    headers: {"Content-Type": "application/json"},
-    body: JSON.stringify({session_id: sid, message: text})
-  });
-  const data = await r.json();
-  log.lastChild.textContent = data.reply;
-  speechSynthesis.speak(new SpeechSynthesisUtterance(data.reply.replace(/[*#]/g, "")));
+  const b = add("bot", "...");
+  try {
+    const r = await fetch("/api/chat", {
+      method: "POST", headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({session_id: sid, message: text})
+    });
+    const data = await r.json();
+    const clean = data.reply.replace(/\*\*/g, "");
+    b.textContent = clean;
+    speechSynthesis.speak(new SpeechSynthesisUtterance(clean));
+  } catch (e) { b.textContent = "లోపం జరిగింది, మళ్ళీ ప్రయత్నించండి."; }
+  loadDash();
 }
 
-document.getElementById("send").onclick = send;
+document.getElementById("send").onclick = () => send();
 msg.addEventListener("keydown", e => { if (e.key === "Enter") send(); });
+document.querySelectorAll(".quick button").forEach(b => b.onclick = () => send(b.dataset.q));
 
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+const mic = document.getElementById("mic");
 if (SR) {
-  const rec = new SR();
-  rec.lang = "te-IN";
-  rec.onresult = e => { msg.value = e.results[0][0].transcript; send(); };
-  document.getElementById("mic").onclick = () => rec.start();
-} else {
-  document.getElementById("mic").style.display = "none";
-}
+  const rec = new SR(); rec.lang = "te-IN";
+  rec.onstart = () => mic.classList.add("on");
+  rec.onend = () => mic.classList.remove("on");
+  rec.onresult = e => send(e.results[0][0].transcript);
+  mic.onclick = () => rec.start();
+} else { mic.style.display = "none"; }
+
+loadDash();
 </script>
 </body>
 </html>
