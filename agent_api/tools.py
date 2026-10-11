@@ -94,6 +94,16 @@ def draft_reorder() -> list:
     for supplier, items in by_supplier.items():
         lines = "\n".join(f"- {i['product']}: {i['quantity']} {i['unit']}" for i in items)
         message = f"నమస్తే {supplier.name}, దయచేసి ఈ సరుకు పంపండి:\n{lines}"
+        existing = ReorderOrder.objects.filter(supplier=supplier, status="draft").first()
+        if existing:
+            existing.items_json = json.dumps(items, ensure_ascii=False)
+            existing.message = message
+            existing.save()
+            drafts.append(
+                {"order_id": existing.id, "supplier": supplier.name, "items": items,
+                 "message": message, "status": "draft"}
+            )
+            continue
         order = ReorderOrder.objects.create(
             supplier=supplier, items_json=json.dumps(items, ensure_ascii=False),
             message=message, status="draft",
