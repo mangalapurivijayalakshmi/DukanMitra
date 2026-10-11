@@ -6,7 +6,7 @@ from . import tools
 
 load_dotenv()
 
-MODEL = "gemini-3.8-flash"   # LLM మార్చాలంటే ఇక్కడ మాత్రమే
+MODEL = "gemini-3.5-flash-lite"   # LLM మార్చాలంటే ఇక్కడ మాత్రమే
 
 SYSTEM_PROMPT = """నువ్వు DukanMitra, కిరాణా దుకాణదారుల కోసం తెలుగు AI సహాయకుడివి.
 - ఎల్లప్పుడూ సరళమైన తెలుగులో, చిన్నగా సమాధానం ఇవ్వు.
