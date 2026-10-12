@@ -60,9 +60,9 @@
   <div class="card">
     <div class="head"><h3>💬 అడగండి</h3><button id="spk" title="వాయిస్ ఆన్/ఆఫ్">🔊</button></div>
     <div class="quick">
-      <button data-q="ఈ రోజు సారాంశం చెప్పు">📊 సారాంశం</button>
-      <button data-q="బియ్యం స్టాక్ ఎంత ఉంది? ఎన్ని రోజులు వస్తుంది?">🌾 బియ్యం</button>
-      <button data-q="తక్కువ stock ఉన్నవాటికి supplier కి order తయారు చేయి">📦 ఆర్డర్ తయారు</button>
+      <button id="qsum">📊 సారాంశం</button>
+      <button data-q="బియ్యం స్టాక్ ఎంత ఉంది? ఎన్ని రోజులు వస్తుంది?">🌾 బియ్యం (AI)</button>
+      <button id="qdraft">📦 ఆర్డర్ తయారు</button>
     </div>
     <div id="orders"></div>
     <div id="log"></div>
@@ -148,7 +148,22 @@ async function send(text) {
 
 document.getElementById("send").onclick = () => send();
 msg.addEventListener("keydown", e => { if (e.key === "Enter") send(); });
-document.querySelectorAll(".quick button").forEach(b => b.onclick = () => send(b.dataset.q));
+document.querySelectorAll(".quick button[data-q]").forEach(b => b.onclick = () => send(b.dataset.q));
+
+document.getElementById("qdraft").onclick = async () => {
+  const d = await (await fetch("/api/draft", {method:"POST"})).json();
+  add("bot", d.drafts.length
+    ? "📦 " + d.drafts.length + " ఆర్డర్ డ్రాఫ్ట్‌లు సిద్ధం. పైన కార్డులలో ఆమోదించండి లేదా రద్దు చేయండి."
+    : "తక్కువ నిల్వ ఉన్న వస్తువులు లేవు ✅");
+  loadOrders();
+};
+
+document.getElementById("qsum").onclick = async () => {
+  const d = await (await fetch("/api/dashboard")).json();
+  add("bot", "📊 ఈ రోజు సారాంశం\nఅమ్మకాలు: ₹" + (d.sales.total_amount || 0) + " (" + d.sales.number_of_sales + ")\n" +
+    "తక్కువ నిల్వ: " + d.low_stock.map(i => i.product).join(", ") + "\n" +
+    "బాకీలు: " + d.credit.map(c => c.name + " ₹" + c.balance_due).join(", "));
+};
 
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
 const mic = document.getElementById("mic");

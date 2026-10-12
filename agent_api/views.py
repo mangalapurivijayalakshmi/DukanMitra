@@ -59,3 +59,8 @@ def order_action(request):
         return JsonResponse({"success": True, "status": "cancelled"})
     except ReorderOrder.DoesNotExist:
         return JsonResponse({"success": False})
+
+@csrf_exempt
+def draft_api(request):
+    drafts = tools.draft_reorder()
+    return JsonResponse({"drafts": drafts})

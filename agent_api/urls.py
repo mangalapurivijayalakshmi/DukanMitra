@@ -7,5 +7,5 @@ urlpatterns = [
     path("api/dashboard", views.dashboard_api),
     path("api/orders", views.orders_api),
     path("api/order-action", views.order_action),
-
+    path("api/draft", views.draft_api),
 ]
