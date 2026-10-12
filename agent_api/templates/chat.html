@@ -16,9 +16,12 @@
   .card { background:#fff; border-radius:14px; padding:14px; box-shadow:0 2px 8px rgba(0,0,0,.08); margin-bottom:14px; }
   .card h3 { margin:0 0 8px; font-size:15px; color:var(--gd); }
   .big { font-size:28px; font-weight:700; color:var(--g); }
-  .item { display:flex; justify-content:space-between; padding:5px 0; border-bottom:1px solid #eee; font-size:14px; }
+  .item { display:flex; justify-content:space-between; padding:5px 0; font-size:14px; }
   .low { color:#c62828; font-weight:600; }
-  #log { height:48vh; overflow-y:auto; padding:6px; }
+  .bar { height:6px; background:#eee; border-radius:4px; margin:2px 0 6px; }
+  .bar i { display:block; height:100%; background:#e53935; border-radius:4px; }
+  #credit .item { border-bottom:1px solid #eee; }
+  #log { height:42vh; overflow-y:auto; padding:6px; }
   .bubble { max-width:85%; padding:9px 12px; border-radius:14px; margin:6px 0; white-space:pre-wrap; line-height:1.4; font-size:15px; }
   .me { background:var(--g); color:#fff; margin-left:auto; border-bottom-right-radius:4px; }
   .bot { background:#e9f5ee; border-bottom-left-radius:4px; }
@@ -31,6 +34,13 @@
   #mic { background:#e53935; color:#fff; border:none; border-radius:50%; width:44px; height:44px; font-size:18px; cursor:pointer; }
   #mic.on { animation: pulse 1s infinite; }
   @keyframes pulse { 50% { box-shadow:0 0 0 8px rgba(229,57,53,.25);} }
+  .order { border:1px solid #cfe8d8; background:#f7fcf9; border-radius:12px; padding:10px; margin:8px 0; }
+  .order b { color:var(--gd); }
+  .order ul { margin:6px 0; padding-left:18px; font-size:14px; }
+  .order button { border:none; border-radius:8px; padding:6px 12px; cursor:pointer; margin-right:6px; color:#fff; }
+  .ok { background:var(--g); } .no { background:#9e9e9e; }
+  .head { display:flex; justify-content:space-between; align-items:center; }
+  #spk { background:none; border:1px solid #ccc; border-radius:8px; cursor:pointer; padding:2px 8px; }
 </style>
 </head>
 <body>
@@ -48,13 +58,13 @@
   </div>
 
   <div class="card">
-    <h3>💬 అడగండి</h3>
+    <div class="head"><h3>💬 అడగండి</h3><button id="spk" title="వాయిస్ ఆన్/ఆఫ్">🔊</button></div>
     <div class="quick">
       <button data-q="ఈ రోజు సారాంశం చెప్పు">📊 సారాంశం</button>
       <button data-q="బియ్యం స్టాక్ ఎంత ఉంది? ఎన్ని రోజులు వస్తుంది?">🌾 బియ్యం</button>
       <button data-q="తక్కువ stock ఉన్నవాటికి supplier కి order తయారు చేయి">📦 ఆర్డర్ తయారు</button>
-      <button data-q="అవును, ఆ ఆర్డర్లను approve చేయి">✅ ఆమోదించు</button>
     </div>
+    <div id="orders"></div>
     <div id="log"></div>
     <div id="row">
       <input id="msg" placeholder="తెలుగులో అడగండి...">
@@ -68,6 +78,12 @@
 const sid = "s" + Math.random().toString(36).slice(2);
 const log = document.getElementById("log");
 const msg = document.getElementById("msg");
+let speak = true;
+
+document.getElementById("spk").onclick = e => {
+  speak = !speak; e.target.textContent = speak ? "🔊" : "🔇";
+  if (!speak) speechSynthesis.cancel();
+};
 
 function add(cls, text) {
   const d = document.createElement("div");
@@ -81,7 +97,8 @@ async function loadDash() {
     document.getElementById("sales").textContent = "₹" + (d.sales.total_amount || 0);
     document.getElementById("count").textContent = d.sales.number_of_sales + " అమ్మకాలు";
     document.getElementById("low").innerHTML = d.low_stock.length
-      ? d.low_stock.map(i => `<div class="item"><span>${i.product}</span><span class="low">${i.stock} ${i.unit}</span></div>`).join("")
+      ? d.low_stock.map(i => `<div class="item"><span>${i.product}</span><span class="low">${i.stock} ${i.unit}</span></div>
+          <div class="bar"><i style="width:${Math.min(100, i.stock / i.limit * 100)}%"></i></div>`).join("")
       : "అన్నీ సరిపడా ఉన్నాయి ✅";
     document.getElementById("credit").innerHTML = d.credit.length
       ? d.credit.map(c => `<div class="item"><span>${c.name}</span><span>₹${c.balance_due}</span></div>`).join("")
@@ -89,11 +106,33 @@ async function loadDash() {
   } catch (e) {}
 }
 
+async function loadOrders() {
+  try {
+    const d = await (await fetch("/api/orders")).json();
+    document.getElementById("orders").innerHTML = d.orders.map(o => `
+      <div class="order"><b>📦 Order #${o.id}: ${o.supplier}</b>
+        <ul>${o.items.map(i => `<li>${i.product}: ${i.quantity} ${i.unit}</li>`).join("")}</ul>
+        <button class="ok" onclick="act(${o.id},'approve')">✅ ఆమోదించు</button>
+        <button class="no" onclick="act(${o.id},'cancel')">❌ రద్దు</button>
+      </div>`).join("");
+  } catch (e) {}
+}
+
+async function act(id, action) {
+  const r = await (await fetch("/api/order-action", {
+    method: "POST", headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({id, action})})).json();
+  add("bot", action === "approve" && r.success
+    ? "✅ Order #" + id + " ఆమోదించబడింది.\n" + (r.message_to_send || "")
+    : "❌ Order #" + id + " రద్దు చేయబడింది.");
+  loadOrders(); loadDash();
+}
+
 async function send(text) {
   text = (text || msg.value).trim();
   if (!text) return;
   add("me", text); msg.value = "";
-  const b = add("bot", "...");
+  const b = add("bot", "ఆలోచిస్తున్నాను...");
   try {
     const r = await fetch("/api/chat", {
       method: "POST", headers: {"Content-Type": "application/json"},
@@ -102,9 +141,9 @@ async function send(text) {
     const data = await r.json();
     const clean = data.reply.replace(/\*\*/g, "");
     b.textContent = clean;
-    speechSynthesis.speak(new SpeechSynthesisUtterance(clean));
+    if (speak) speechSynthesis.speak(new SpeechSynthesisUtterance(clean));
   } catch (e) { b.textContent = "లోపం జరిగింది, మళ్ళీ ప్రయత్నించండి."; }
-  loadDash();
+  loadDash(); loadOrders();
 }
 
 document.getElementById("send").onclick = () => send();
@@ -122,6 +161,8 @@ if (SR) {
 } else { mic.style.display = "none"; }
 
 loadDash();
+loadOrders();
+add("bot", "నమస్తే! నేను DukanMitra. స్టాక్, ధరలు, అమ్మకాలు, బాకీల గురించి అడగండి.");
 </script>
 </body>
 </html>
