@@ -4,6 +4,8 @@ from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
 from . import tools
 from .agent import chat
+from datetime import date, timedelta
+from django.db.models import Sum
 
 
 def home(request):
@@ -28,10 +30,34 @@ def chat_api(request):
 
 
 def dashboard_api(request):
+    from shop.models import Sale, Product
+    n = int(request.GET.get("days", 7))
+    n = n if n in (1, 7, 30) else 7
+    days = []
+    for i in range(n-1, -1, -1):
+        d = date.today() - timedelta(days=i)
+        t = Sale.objects.filter(date=d).aggregate(t=Sum("total_amount"))["t"] or 0
+        days.append({"day": d.strftime("%d %b"), "total": t})
+
+    since = date.today() - timedelta(days=n)
+    best = (Sale.objects.filter(date__gte=since)
+            .values("product__telugu_name", "product__unit")
+            .annotate(q=Sum("quantity"), amt=Sum("total_amount"))
+            .order_by("-amt")[:5])
+    week_total = sum(x["total"] for x in days)
+    out_of_stock = list(Product.objects.filter(stock__lte=0).values_list("telugu_name", flat=True))
+    sales = tools.today_sales()
     return JsonResponse({
-        "sales": tools.today_sales(),
+        "sales": sales,
         "low_stock": tools.low_stock_items(),
         "credit": tools.pending_credit(),
+        "week": days,
+        "week_total": week_total,
+        "best": [{"name": b["product__telugu_name"], "unit": b["product__unit"],
+                  "qty": b["q"], "amt": b["amt"]} for b in best],
+        "out_of_stock": out_of_stock,
+        "credit_total": sum(c["balance_due"] for c in tools.pending_credit()),
+        "pending_orders": __import__("shop.models", fromlist=["ReorderOrder"]).ReorderOrder.objects.filter(status="draft").count(),
     })
 
 def orders_api(request):

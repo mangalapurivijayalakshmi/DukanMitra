@@ -64,6 +64,16 @@ async def daily_summary() -> dict:
     """Today's sales, low-stock items and pending credit in one summary."""
     return await sync_to_async(tools.daily_summary)()
 
+@mcp.tool()
+async def customer_credit(name: str) -> dict:
+    """Get how much a named customer owes (udhar)."""
+    return await sync_to_async(tools.customer_credit)(name)
+
+
+@mcp.tool()
+async def best_sellers(days: int = 7) -> list:
+    """Top-selling products by revenue over the last N days."""
+    return await sync_to_async(tools.best_sellers)(days)
 
 if __name__ == "__main__":
     mcp.run(transport="streamable-http")

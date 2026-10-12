@@ -100,3 +100,19 @@ def approve_reorder(order_id: int) -> dict:
 def daily_summary() -> dict:
     return {"sales": today_sales(), "low_stock": low_stock_items(),
             "pending_credit": pending_credit()}
+
+def customer_credit(name: str) -> dict:
+    c = Customer.objects.filter(name__icontains=name).first()
+    if not c:
+        return {"found": False, "message": f"'{name}' దొరకలేదు"}
+    return {"found": True, "name": c.name, "balance_due": c.balance_due}
+
+
+def best_sellers(days: int = 7) -> list:
+    since = date.today() - timedelta(days=days)
+    rows = (Sale.objects.filter(date__gte=since)
+            .values("product__telugu_name", "product__unit")
+            .annotate(q=Sum("quantity"), amt=Sum("total_amount"))
+            .order_by("-amt")[:5])
+    return [{"product": r["product__telugu_name"], "quantity": r["q"],
+             "unit": r["product__unit"], "revenue": r["amt"]} for r in rows]

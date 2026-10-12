@@ -7,40 +7,53 @@
 <style>
   :root { --g:#1b8a4b; --gd:#146c3a; --bg:#f1f8f3; }
   * { box-sizing: border-box; }
-  body { margin:0; font-family: "Segoe UI", sans-serif; background:var(--bg); color:#222; }
-  header { background:linear-gradient(90deg,var(--gd),var(--g)); color:#fff; padding:14px 20px; display:flex; align-items:center; gap:10px; }
-  header h1 { margin:0; font-size:22px; }
-  header span { opacity:.85; font-size:13px; }
-  .wrap { max-width:1000px; margin:16px auto; padding:0 12px; display:grid; grid-template-columns: 1fr 1.2fr; gap:16px; }
-  @media (max-width:800px){ .wrap{ grid-template-columns:1fr; } }
-  .card { background:#fff; border-radius:14px; padding:14px; box-shadow:0 2px 8px rgba(0,0,0,.08); margin-bottom:14px; }
-  .card h3 { margin:0 0 8px; font-size:15px; color:var(--gd); }
-  .big { font-size:28px; font-weight:700; color:var(--g); }
+  body { margin:0; font-family:"Segoe UI",sans-serif; background:var(--bg); color:#222; }
+  header { background:linear-gradient(90deg,var(--gd),var(--g)); color:#fff; padding:14px 24px; display:flex; align-items:center; gap:12px; }
+  header h1 { margin:0; font-size:22px; } header span { opacity:.85; font-size:13px; }
+  .page { max-width:1400px; margin:0 auto; padding:16px; }
+  .kpis { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:16px; }
+  .kpi { background:#fff; border-radius:14px; padding:14px 16px; box-shadow:0 2px 8px rgba(0,0,0,.08); border-left:5px solid var(--g); }
+  .kpi.warn { border-left-color:#e53935; } .kpi.amber { border-left-color:#f9a825; } .kpi.blue { border-left-color:#1e88e5; }
+  .kpi small { color:#666; font-size:12px; } .kpi b { display:block; font-size:26px; margin-top:4px; }
+  .grid { display:grid; grid-template-columns:1fr 1fr 1.3fr; gap:16px; align-items:start; }
+  @media (max-width:1100px){ .grid{ grid-template-columns:1fr 1fr; } .chatcol{ grid-column:1 / -1; } }
+  @media (max-width:700px){ .kpis{ grid-template-columns:1fr 1fr; } .grid{ grid-template-columns:1fr; } .kpi b{font-size:20px;} }
+  .card { background:#fff; border-radius:14px; padding:14px; box-shadow:0 2px 8px rgba(0,0,0,.08); margin-bottom:16px; }
+  .card h3 { margin:0 0 10px; font-size:15px; color:var(--gd); }
   .item { display:flex; justify-content:space-between; padding:5px 0; font-size:14px; }
   .low { color:#c62828; font-weight:600; }
   .bar { height:6px; background:#eee; border-radius:4px; margin:2px 0 6px; }
   .bar i { display:block; height:100%; background:#e53935; border-radius:4px; }
-  #credit .item { border-bottom:1px solid #eee; }
-  #log { height:42vh; overflow-y:auto; padding:6px; }
-  .bubble { max-width:85%; padding:9px 12px; border-radius:14px; margin:6px 0; white-space:pre-wrap; line-height:1.4; font-size:15px; }
+  .bar.g i { background:var(--g); }
+  #credit .item, #best .item { border-bottom:1px solid #eee; }
+  #chart { display:flex; align-items:flex-end; gap:6px; height:150px; padding-top:8px; overflow-x:auto; }
+  #chart div { flex:1; min-width:28px; text-align:center; font-size:10px; color:#555; }
+  #chart i { display:block; background:linear-gradient(var(--g),#6fcf97); border-radius:6px 6px 0 0; min-height:3px; }
+  .alert { background:#ffebee; color:#b71c1c; border-radius:10px; padding:8px 12px; margin-bottom:12px; font-size:14px; display:none; }
+  #log { height:36vh; overflow-y:auto; padding:6px; }
+  .bubble { max-width:88%; padding:9px 12px; border-radius:14px; margin:6px 0; white-space:pre-wrap; line-height:1.4; font-size:15px; }
   .me { background:var(--g); color:#fff; margin-left:auto; border-bottom-right-radius:4px; }
   .bot { background:#e9f5ee; border-bottom-left-radius:4px; }
   .quick { display:flex; flex-wrap:wrap; gap:6px; margin:8px 0; }
   .quick button { background:#fff; border:1px solid var(--g); color:var(--gd); border-radius:16px; padding:6px 12px; cursor:pointer; font-size:13px; }
   .quick button:hover { background:var(--g); color:#fff; }
   #row { display:flex; gap:6px; }
-  #msg { flex:1; padding:11px; font-size:15px; border:1px solid #ccc; border-radius:10px; }
+  #msg { flex:1; min-width:0; padding:11px; font-size:15px; border:1px solid #ccc; border-radius:10px; }
   #send { background:var(--g); color:#fff; border:none; border-radius:10px; padding:0 16px; font-size:15px; cursor:pointer; }
   #mic { background:#e53935; color:#fff; border:none; border-radius:50%; width:44px; height:44px; font-size:18px; cursor:pointer; }
-  #mic.on { animation: pulse 1s infinite; }
+  #mic.on { animation:pulse 1s infinite; }
   @keyframes pulse { 50% { box-shadow:0 0 0 8px rgba(229,57,53,.25);} }
   .order { border:1px solid #cfe8d8; background:#f7fcf9; border-radius:12px; padding:10px; margin:8px 0; }
-  .order b { color:var(--gd); }
-  .order ul { margin:6px 0; padding-left:18px; font-size:14px; }
+  .order b { color:var(--gd); } .order ul { margin:6px 0; padding-left:18px; font-size:14px; }
   .order button { border:none; border-radius:8px; padding:6px 12px; cursor:pointer; margin-right:6px; color:#fff; }
   .ok { background:var(--g); } .no { background:#9e9e9e; }
   .head { display:flex; justify-content:space-between; align-items:center; }
   #spk { background:none; border:1px solid #ccc; border-radius:8px; cursor:pointer; padding:2px 8px; }
+  .tag { font-size:11px; padding:2px 8px; border-radius:10px; color:#fff; margin-left:6px; }
+  .t-crit { background:#c62828; } .t-low { background:#f9a825; }
+  .filter { margin-left:6px; }
+  .filter button { border:1px solid var(--g); background:#fff; color:var(--gd); border-radius:12px; padding:3px 10px; cursor:pointer; font-size:12px; }
+  .filter button.act { background:var(--g); color:#fff; }
 </style>
 </head>
 <body>
@@ -49,41 +62,63 @@
   <div><h1>DukanMitra</h1><span>తెలుగు AI దుకాణ సహాయకుడు</span></div>
 </header>
 
-<div class="wrap">
-  <div>
-    <div class="card"><h3>ఈ రోజు అమ్మకాలు</h3>
-      <div class="big" id="sales">₹0</div><div id="count" style="font-size:13px;color:#666"></div></div>
-    <div class="card"><h3>⚠️ తక్కువ నిల్వ</h3><div id="low">...</div></div>
-    <div class="card"><h3>💰 బాకీలు (ఉద్దెర)</h3><div id="credit">...</div></div>
+<div class="page">
+  <div class="alert" id="oos"></div>
+
+  <div class="kpis">
+    <div class="kpi"><small>ఈ రోజు Revenue (అమ్మకాలు)</small><b id="k1">₹0</b><small id="k1s"></small></div>
+    <div class="kpi blue"><small>Revenue (ఎంచుకున్న కాలం)</small><b id="k2">₹0</b><small id="k2s"></small></div>
+    <div class="kpi warn"><small>తక్కువ నిల్వ వస్తువులు</small><b id="k3">0</b><small>ఆర్డర్ అవసరం</small></div>
+    <div class="kpi amber"><small>మొత్తం బాకీలు</small><b id="k4">₹0</b><small id="k4s"></small></div>
   </div>
 
-  <div class="card">
-    <div class="head"><h3>💬 అడగండి</h3><button id="spk" title="వాయిస్ ఆన్/ఆఫ్">🔊</button></div>
-    <div class="quick">
-      <button id="qsum">📊 సారాంశం</button>
-      <button data-q="బియ్యం స్టాక్ ఎంత ఉంది? ఎన్ని రోజులు వస్తుంది?">🌾 బియ్యం (AI)</button>
-      <button id="qdraft">📦 ఆర్డర్ తయారు</button>
+  <div class="grid">
+    <div>
+      <div class="card">
+        <h3>📈 అమ్మకాలు (Revenue)
+          <span class="filter">
+            <button data-d="1">ఈ రోజు</button><button data-d="7" class="act">7 రోజులు</button><button data-d="30">30 రోజులు</button>
+          </span>
+        </h3>
+        <div id="chart"></div>
+      </div>
+      <div class="card"><h3>🏆 ఎక్కువగా అమ్ముడైనవి</h3><div id="best"></div></div>
     </div>
-    <div id="orders"></div>
-    <div id="log"></div>
-    <div id="row">
-      <input id="msg" placeholder="తెలుగులో అడగండి...">
-      <button id="mic" title="మాట్లాడండి">🎤</button>
-      <button id="send">పంపు</button>
+
+    <div>
+      <div class="card"><h3>⚠️ తక్కువ నిల్వ</h3><div id="low">...</div></div>
+      <div class="card"><h3>💰 బాకీలు (ఉద్దెర)</h3><div id="credit">...</div></div>
+    </div>
+
+    <div class="card chatcol">
+      <div class="head"><h3>💬 అడగండి</h3><button id="spk" title="వాయిస్ ఆన్/ఆఫ్">🔊</button></div>
+      <div class="quick">
+        <button id="qsum">📊 సారాంశం</button>
+        <button id="qdraft">📦 ఆర్డర్ తయారు</button>
+        <button data-q="ఈరోజు అమ్మకాలు ఎంత?">💵 ఈరోజు అమ్మకాలు</button>
+        <button data-q="ఈ వారం ఏ వస్తువు ఎక్కువ అమ్ముడైంది?">🏆 ఎక్కువ అమ్ముడైనది</button>
+        <button data-q="ఏ వస్తువులు అయిపోతున్నాయి?">⚠️ అయిపోతున్నవి</button>
+        <button data-q="బియ్యం స్టాక్ ఎంత ఉంది? ఎన్ని రోజులు వస్తుంది?">🌾 బియ్యం</button>
+        <button data-q="రమేష్ ఎంత బాకీ ఉన్నాడు?">👤 రమేష్ బాకీ</button>
+      </div>
+      <div id="orders"></div>
+      <div id="log"></div>
+      <div id="row">
+        <input id="msg" placeholder="తెలుగులో అడగండి...">
+        <button id="mic" title="మాట్లాడండి">🎤</button>
+        <button id="send">పంపు</button>
+      </div>
     </div>
   </div>
 </div>
 
 <script>
 const sid = "s" + Math.random().toString(36).slice(2);
-const log = document.getElementById("log");
-const msg = document.getElementById("msg");
-let speak = true;
+const log = document.getElementById("log"), msg = document.getElementById("msg");
+const $ = id => document.getElementById(id);
+let speak = true, DASH = null, DAYS = 7;
 
-document.getElementById("spk").onclick = e => {
-  speak = !speak; e.target.textContent = speak ? "🔊" : "🔇";
-  if (!speak) speechSynthesis.cancel();
-};
+$("spk").onclick = e => { speak = !speak; e.target.textContent = speak ? "🔊" : "🔇"; if (!speak) speechSynthesis.cancel(); };
 
 function add(cls, text) {
   const d = document.createElement("div");
@@ -93,23 +128,45 @@ function add(cls, text) {
 
 async function loadDash() {
   try {
-    const d = await (await fetch("/api/dashboard")).json();
-    document.getElementById("sales").textContent = "₹" + (d.sales.total_amount || 0);
-    document.getElementById("count").textContent = d.sales.number_of_sales + " అమ్మకాలు";
-    document.getElementById("low").innerHTML = d.low_stock.length
-      ? d.low_stock.map(i => `<div class="item"><span>${i.product}</span><span class="low">${i.stock} ${i.unit}</span></div>
-          <div class="bar"><i style="width:${Math.min(100, i.stock / i.limit * 100)}%"></i></div>`).join("")
-      : "అన్నీ సరిపడా ఉన్నాయి ✅";
-    document.getElementById("credit").innerHTML = d.credit.length
-      ? d.credit.map(c => `<div class="item"><span>${c.name}</span><span>₹${c.balance_due}</span></div>`).join("")
-      : "బాకీలు లేవు";
+    const d = DASH = await (await fetch("/api/dashboard?days=" + DAYS)).json();
+    $("k1").textContent = "₹" + (d.sales.total_amount || 0);
+    $("k1s").textContent = d.sales.number_of_sales + " అమ్మకాలు";
+    $("k2").textContent = "₹" + d.week_total;
+    $("k2s").textContent = DAYS === 1 ? "ఈ రోజు" : "గత " + DAYS + " రోజులు";
+    $("k3").textContent = d.low_stock.length;
+    $("k4").textContent = "₹" + d.credit_total;
+    $("k4s").textContent = d.credit.length + " కస్టమర్లు";
+
+    const max = Math.max(1, ...d.week.map(x => x.total));
+    $("chart").innerHTML = d.week.map(x =>
+      `<div><small>₹${x.total}</small><i style="height:${Math.round(x.total / max * 100)}px"></i>${x.day}</div>`).join("");
+
+    const bmax = Math.max(1, ...d.best.map(x => x.amt));
+    $("best").innerHTML = d.best.length ? d.best.map(b =>
+      `<div class="item"><span>${b.name} (${b.qty} ${b.unit})</span><span>₹${b.amt}</span></div>
+       <div class="bar g"><i style="width:${b.amt / bmax * 100}%"></i></div>`).join("") : "డేటా లేదు";
+
+    $("low").innerHTML = d.low_stock.length ? d.low_stock.map(i => {
+      const crit = i.stock < i.limit / 2;
+      return `<div class="item"><span>${i.product}</span>
+        <span class="low">${i.stock} ${i.unit}<span class="tag ${crit ? 't-crit' : 't-low'}">${crit ? 'చాలా తక్కువ' : 'తక్కువ'}</span></span></div>
+       <div class="bar"><i style="width:${Math.min(100, i.stock / i.limit * 100)}%"></i></div>
+       <div style="font-size:12px;color:#777;margin-bottom:4px">కనీసం ${i.limit} • ${i.supplier || ""}</div>`;
+    }).join("") : "అన్నీ సరిపడా ఉన్నాయి ✅";
+
+    $("credit").innerHTML = d.credit.length ? d.credit.map(c =>
+      `<div class="item"><span>${c.name}</span><span>₹${c.balance_due}</span></div>`).join("") : "బాకీలు లేవు";
+
+    const o = $("oos");
+    if (d.out_of_stock.length) { o.style.display = "block"; o.textContent = "🚨 స్టాక్ అయిపోయింది: " + d.out_of_stock.join(", "); }
+    else o.style.display = "none";
   } catch (e) {}
 }
 
 async function loadOrders() {
   try {
     const d = await (await fetch("/api/orders")).json();
-    document.getElementById("orders").innerHTML = d.orders.map(o => `
+    $("orders").innerHTML = d.orders.map(o => `
       <div class="order"><b>📦 Order #${o.id}: ${o.supplier}</b>
         <ul>${o.items.map(i => `<li>${i.product}: ${i.quantity} ${i.unit}</li>`).join("")}</ul>
         <button class="ok" onclick="act(${o.id},'approve')">✅ ఆమోదించు</button>
@@ -119,8 +176,9 @@ async function loadOrders() {
 }
 
 async function act(id, action) {
+  if (action === "approve" && !confirm("Order #" + id + " ని supplier కి ఆమోదించాలా?")) return;
   const r = await (await fetch("/api/order-action", {
-    method: "POST", headers: {"Content-Type": "application/json"},
+    method:"POST", headers:{"Content-Type":"application/json"},
     body: JSON.stringify({id, action})})).json();
   add("bot", action === "approve" && r.success
     ? "✅ Order #" + id + " ఆమోదించబడింది.\n" + (r.message_to_send || "")
@@ -135,9 +193,8 @@ async function send(text) {
   const b = add("bot", "ఆలోచిస్తున్నాను...");
   try {
     const r = await fetch("/api/chat", {
-      method: "POST", headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({session_id: sid, message: text})
-    });
+      method:"POST", headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({session_id: sid, message: text})});
     const data = await r.json();
     const clean = data.reply.replace(/\*\*/g, "");
     b.textContent = clean;
@@ -146,11 +203,17 @@ async function send(text) {
   loadDash(); loadOrders();
 }
 
-document.getElementById("send").onclick = () => send();
+$("send").onclick = () => send();
 msg.addEventListener("keydown", e => { if (e.key === "Enter") send(); });
 document.querySelectorAll(".quick button[data-q]").forEach(b => b.onclick = () => send(b.dataset.q));
 
-document.getElementById("qdraft").onclick = async () => {
+document.querySelectorAll(".filter button").forEach(b => b.onclick = () => {
+  DAYS = +b.dataset.d;
+  document.querySelectorAll(".filter button").forEach(x => x.classList.remove("act"));
+  b.classList.add("act"); loadDash();
+});
+
+$("qdraft").onclick = async () => {
   const d = await (await fetch("/api/draft", {method:"POST"})).json();
   add("bot", d.drafts.length
     ? "📦 " + d.drafts.length + " ఆర్డర్ డ్రాఫ్ట్‌లు సిద్ధం. పైన కార్డులలో ఆమోదించండి లేదా రద్దు చేయండి."
@@ -158,25 +221,24 @@ document.getElementById("qdraft").onclick = async () => {
   loadOrders();
 };
 
-document.getElementById("qsum").onclick = async () => {
-  const d = await (await fetch("/api/dashboard")).json();
-  add("bot", "📊 ఈ రోజు సారాంశం\nఅమ్మకాలు: ₹" + (d.sales.total_amount || 0) + " (" + d.sales.number_of_sales + ")\n" +
+$("qsum").onclick = async () => {
+  await loadDash(); const d = DASH;
+  const top = d.best[0] ? d.best[0].name : "-";
+  add("bot", "📊 ఈ రోజు సారాంశం\nRevenue: ₹" + (d.sales.total_amount || 0) + " (" + d.sales.number_of_sales + " అమ్మకాలు)\n" +
+    "ఎంచుకున్న కాలం Revenue: ₹" + d.week_total + "\nఎక్కువగా అమ్ముడైనది: " + top + "\n" +
     "తక్కువ నిల్వ: " + d.low_stock.map(i => i.product).join(", ") + "\n" +
-    "బాకీలు: " + d.credit.map(c => c.name + " ₹" + c.balance_due).join(", "));
+    "బాకీలు: ₹" + d.credit_total);
 };
 
-const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-const mic = document.getElementById("mic");
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition, mic = $("mic");
 if (SR) {
   const rec = new SR(); rec.lang = "te-IN";
-  rec.onstart = () => mic.classList.add("on");
-  rec.onend = () => mic.classList.remove("on");
+  rec.onstart = () => mic.classList.add("on"); rec.onend = () => mic.classList.remove("on");
   rec.onresult = e => send(e.results[0][0].transcript);
   mic.onclick = () => rec.start();
 } else { mic.style.display = "none"; }
 
-loadDash();
-loadOrders();
+loadDash(); loadOrders();
 add("bot", "నమస్తే! నేను DukanMitra. స్టాక్, ధరలు, అమ్మకాలు, బాకీల గురించి అడగండి.");
 </script>
 </body>

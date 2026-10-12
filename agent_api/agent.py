@@ -52,9 +52,16 @@ def daily_summary() -> dict:
     """ఈ రోజు అమ్మకాలు, తక్కువ stock, బాకీలు ఒకే summary లో."""
     return tools.daily_summary()
 
+def customer_credit(name: str) -> dict:
+    """ఒక కస్టమర్ ఎంత బాకీ ఉన్నాడో చెబుతుంది (పేరుతో)."""
+    return tools.customer_credit(name)
+
+def best_sellers(days: int = 7) -> list:
+    """గత కొన్ని రోజుల్లో ఎక్కువగా అమ్ముడైన వస్తువులు."""
+    return tools.best_sellers(days)
 
 TOOL_LIST = [get_stock, get_price, low_stock_items, today_sales, pending_credit,
-             predict_stockout, draft_reorder, approve_reorder, daily_summary]
+             predict_stockout, draft_reorder, approve_reorder, daily_summary, customer_credit, best_sellers]
 
 _client = None
 _chats = {}
