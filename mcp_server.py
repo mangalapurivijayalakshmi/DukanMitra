@@ -7,8 +7,9 @@ django.setup()
 from asgiref.sync import sync_to_async
 from mcp.server.fastmcp import FastMCP
 from agent_api import tools
-
+import functools
 mcp = FastMCP("DukanMitra")
+
 
 
 @mcp.tool()
@@ -69,11 +70,23 @@ async def customer_credit(name: str) -> dict:
     """Get how much a named customer owes (udhar)."""
     return await sync_to_async(tools.customer_credit)(name)
 
-
 @mcp.tool()
 async def best_sellers(days: int = 7) -> list:
     """Top-selling products by revenue over the last N days."""
     return await sync_to_async(tools.best_sellers)(days)
+
+
+def register(fn):
+    @functools.wraps(fn)
+    async def wrapper(*args, **kwargs):
+        return await sync_to_async(fn)(*args, **kwargs)
+    mcp.tool()(wrapper)
+
+
+for _fn in [tools.record_sale, tools.record_payment, tools.add_expense,
+            tools.profit_summary, tools.smart_reorder_advice, tools.mark_delivered,
+            tools.expiry_alerts, tools.stock_history, tools.bill_history]:
+    register(_fn)
 
 if __name__ == "__main__":
     mcp.run(transport="streamable-http")

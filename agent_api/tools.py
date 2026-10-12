@@ -62,7 +62,9 @@ def draft_reorder() -> list:
     for p in low:
         if not p.supplier:
             continue
-        qty = round(p.low_stock_limit * 2 - p.stock, 1)
+        qty = _suggest_qty(p)
+        if qty <= 0:
+            continue
         by_supplier.setdefault(p.supplier, []).append(
             {"product": p.telugu_name, "quantity": qty, "unit": p.unit})
 
@@ -116,3 +118,133 @@ def best_sellers(days: int = 7) -> list:
             .order_by("-amt")[:5])
     return [{"product": r["product__telugu_name"], "quantity": r["q"],
              "unit": r["product__unit"], "revenue": r["amt"]} for r in rows]
+
+def record_sale(product_name: str, quantity: float, payment_method: str = "cash", customer_name: str = "") -> dict:
+    """అమ్మకాన్ని నమోదు చేస్తుంది: bill number, stock తగ్గింపు, మొత్తం. payment_method: cash, upi లేదా credit (ఉద్దెర కి customer_name తప్పనిసరి)."""
+    p = _find(product_name)
+    if not p:
+        return {"success": False, "message": f"'{product_name}' దొరకలేదు"}
+    if quantity <= 0:
+        return {"success": False, "message": "పరిమాణం సరిగా లేదు"}
+    if p.stock < quantity:
+        return {"success": False, "message": f"నిల్వ సరిపోదు, ఉన్నది {p.stock} {p.unit}"}
+    cust = None
+    if payment_method == "credit":
+        cust = Customer.objects.filter(name__icontains=customer_name).first() if customer_name else None
+        if not cust:
+            return {"success": False, "message": "ఉద్దెర అమ్మకానికి కస్టమర్ పేరు కావాలి"}
+    total = quantity * p.price
+    sale = Sale.objects.create(product=p, quantity=quantity, total_amount=total,
+                               date=date.today(), payment_method=payment_method)
+    sale.bill_no = f"B{sale.id:05d}"
+    sale.save()
+    p.stock -= quantity
+    p.save()
+    StockMovement.objects.create(product=p, change=-quantity, reason="sale", ref=sale.bill_no)
+    if cust:
+        cust.balance_due += total
+        cust.save()
+    return {"success": True, "bill_no": sale.bill_no, "product": p.telugu_name,
+            "quantity": quantity, "unit": p.unit, "total": total,
+            "payment_method": payment_method, "stock_left": p.stock}
+
+
+def record_payment(customer_name: str, amount: float, method: str = "cash") -> dict:
+    """కస్టమర్ చెల్లించిన బాకీ (పూర్తి లేదా కొంత) నమోదు చేసి balance తగ్గిస్తుంది."""
+    c = Customer.objects.filter(name__icontains=customer_name).first()
+    if not c:
+        return {"success": False, "message": f"'{customer_name}' దొరకలేదు"}
+    if amount <= 0 or amount > c.balance_due:
+        return {"success": False, "message": f"మొత్తం సరిగా లేదు. బాకీ ₹{c.balance_due}"}
+    c.balance_due -= amount
+    c.save()
+    Payment.objects.create(customer=c, amount=amount, method=method)
+    return {"success": True, "customer": c.name, "paid": amount, "balance_left": c.balance_due}
+
+
+def add_expense(name: str, amount: float) -> dict:
+    """ఒక ఖర్చును (అద్దె, కరెంటు, జీతం మొదలైనవి) ఈ రోజు తేదీతో నమోదు చేస్తుంది."""
+    if amount <= 0:
+        return {"success": False, "message": "మొత్తం సరిగా లేదు"}
+    Expense.objects.create(name=name, amount=amount, date=date.today())
+    return {"success": True, "name": name, "amount": amount}
+
+
+def profit_summary(days: int = 7) -> dict:
+    """గత N రోజుల Revenue, వస్తువుల cost, ఖర్చులు, gross profit, net profit."""
+    since = date.today() - timedelta(days=days - 1)
+    sales = Sale.objects.filter(date__gte=since)
+    revenue = sales.aggregate(t=Sum("total_amount"))["t"] or 0
+    cogs = sales.aggregate(c=Sum(F("quantity") * F("product__purchase_price")))["c"] or 0
+    expenses = Expense.objects.filter(date__gte=since).aggregate(t=Sum("amount"))["t"] or 0
+    missing = Product.objects.filter(purchase_price=0).count()
+    return {"days": days, "revenue": round(revenue, 2), "cost_of_goods": round(cogs, 2),
+            "expenses": round(expenses, 2), "gross_profit": round(revenue - cogs, 2),
+            "net_profit": round(revenue - cogs - expenses, 2),
+            "warning": f"{missing} వస్తువులకు కొనుగోలు ధర లేదు, లాభం అంచనా మాత్రమే" if missing else ""}
+
+
+def _suggest_qty(p) -> float:
+    since = date.today() - timedelta(days=7)
+    sold = Sale.objects.filter(product=p, date__gte=since).aggregate(q=Sum("quantity"))["q"] or 0
+    avg = sold / 7
+    target = max(avg * 7, p.low_stock_limit)       # కనీసం ఒక వారం సరిపడా
+    return max(round(target - p.stock, 1), 0)
+
+
+def smart_reorder_advice() -> list:
+    """తక్కువ నిల్వ వస్తువులకు ఎంత కొనాలో అంచనా (గత 7 రోజుల అమ్మకాల ఆధారంగా). ఇది అంచనా మాత్రమే."""
+    out = []
+    for p in Product.objects.filter(stock__lt=F("low_stock_limit")).select_related("supplier"):
+        qty = _suggest_qty(p)
+        pred = predict_stockout(p.telugu_name)
+        out.append({"product": p.telugu_name, "stock": p.stock, "unit": p.unit,
+                    "days_left": pred.get("days_left"), "suggested_qty": qty,
+                    "estimated_cost": round(qty * p.purchase_price, 2),
+                    "supplier": p.supplier.name if p.supplier else None})
+    return out
+
+
+def mark_delivered(order_id: int) -> dict:
+    """ఆమోదించిన order సరుకు వచ్చాక delivered గా గుర్తించి stock పెంచుతుంది."""
+    try:
+        o = ReorderOrder.objects.get(id=order_id)
+    except ReorderOrder.DoesNotExist:
+        return {"success": False, "message": "order దొరకలేదు"}
+    if o.status != "approved":
+        return {"success": False, "message": f"order స్థితి {o.status}, approved కావాలి"}
+    for it in json.loads(o.items_json):
+        p = _find(it["product"])
+        if p:
+            p.stock += it["quantity"]
+            p.save()
+            StockMovement.objects.create(product=p, change=it["quantity"],
+                                         reason="purchase", ref=f"order{o.id}")
+    o.status = "delivered"
+    o.save()
+    return {"success": True, "order_id": o.id, "status": "delivered"}
+
+
+def expiry_alerts(days: int = 7) -> list:
+    """త్వరలో గడువు ముగిసే వస్తువులు."""
+    limit = date.today() + timedelta(days=days)
+    rows = Product.objects.filter(expiry_date__isnull=False, expiry_date__lte=limit).order_by("expiry_date")
+    return [{"product": p.telugu_name, "expiry": str(p.expiry_date),
+             "days_left": (p.expiry_date - date.today()).days, "stock": p.stock} for p in rows]
+
+
+def stock_history(product_name: str, limit: int = 10) -> list:
+    """ఒక వస్తువు stock మార్పుల చరిత్ర."""
+    p = _find(product_name)
+    if not p:
+        return []
+    return [{"change": m.change, "reason": m.reason, "ref": m.ref,
+             "time": m.created_at.strftime("%d %b %H:%M")}
+            for m in StockMovement.objects.filter(product=p).order_by("-created_at")[:limit]]
+
+
+def bill_history(limit: int = 10) -> list:
+    """ఇటీవలి బిల్లులు."""
+    return [{"bill_no": s.bill_no, "product": s.product.telugu_name, "quantity": s.quantity,
+             "total": s.total_amount, "payment": s.payment_method, "date": str(s.date)}
+            for s in Sale.objects.select_related("product").order_by("-id")[:limit]]

@@ -60,8 +60,16 @@ def best_sellers(days: int = 7) -> list:
     """గత కొన్ని రోజుల్లో ఎక్కువగా అమ్ముడైన వస్తువులు."""
     return tools.best_sellers(days)
 
+def record_sale(product_name: str, quantity: float) -> dict:
+    """యజమాని చెప్పిన అమ్మకాన్ని నమోదు చేస్తుంది, stock తగ్గిస్తుంది, మొత్తం లెక్కిస్తుంది."""
+    return tools.record_sale(product_name, quantity)
+
 TOOL_LIST = [get_stock, get_price, low_stock_items, today_sales, pending_credit,
-             predict_stockout, draft_reorder, approve_reorder, daily_summary, customer_credit, best_sellers]
+             predict_stockout, draft_reorder, approve_reorder, daily_summary,
+             customer_credit, best_sellers,
+             tools.record_sale, tools.record_payment, tools.add_expense,
+             tools.profit_summary, tools.smart_reorder_advice, tools.mark_delivered,
+             tools.expiry_alerts, tools.stock_history, tools.bill_history]
 
 _client = None
 _chats = {}
@@ -85,3 +93,9 @@ def chat(session_id: str, message: str) -> str:
         )
     response = _chats[session_id].send_message(message)
     return response.text 
+
+SYSTEM_PROMPT
+
+- డేటా మార్చే చర్యలకు (record_sale, record_payment, add_expense, approve_reorder, mark_delivered) ముందు వివరాలు చెప్పి "అవునా?" అని అడుగు. యజమాని స్పష్టంగా అవును అన్నాకే ఆ tool వాడు.
+- లాభం గురించి అడిగితే profit_summary వాడు. Revenue ని లాభం అనకు. warning ఉంటే చెప్పు.
+- 'రేపు ఏం కొనాలి' అంటే smart_reorder_advice వాడి, ఇది అంచనా మాత్రమే అని చెప్పు.

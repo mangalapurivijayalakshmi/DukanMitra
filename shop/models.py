@@ -15,7 +15,9 @@ class Product(models.Model):
     unit = models.CharField(max_length=20)           # kg, litre, packet
     stock = models.FloatField(default=0)             # ప్రస్తుత నిల్వ
     low_stock_limit = models.FloatField(default=10)  # ఇంతకంటే తక్కువైతే హెచ్చరిక
-    price = models.FloatField(default=0)             # ఒక యూనిట్ ధర
+    price = models.FloatField(default=0)  # ఒక యూనిట్ ధర
+    purchase_price = models.FloatField(default=0)
+    expiry_date = models.DateField(null=True, blank=True)
     supplier = models.ForeignKey(
         Supplier, on_delete=models.SET_NULL, null=True, blank=True
     )
@@ -29,6 +31,8 @@ class Sale(models.Model):
     quantity = models.FloatField()
     total_amount = models.FloatField()
     date = models.DateField()
+    payment_method = models.CharField(max_length=10, default="cash")  # cash / upi / credit
+    bill_no = models.CharField(max_length=20, blank=True)
 
     def __str__(self):
         return f"{self.product.name} - {self.quantity} - {self.date}"
@@ -47,6 +51,7 @@ class ReorderOrder(models.Model):
         ("draft", "Draft"),
         ("approved", "Approved"),
         ("cancelled", "Cancelled"),
+        ("delivered", "delivered"),
     ]
     supplier = models.ForeignKey(Supplier, on_delete=models.CASCADE)
     items_json = models.TextField()  # [{"product": "బియ్యం", "quantity": 40, "unit": "kg"}]
@@ -56,3 +61,26 @@ class ReorderOrder(models.Model):
 
     def __str__(self):
         return f"Order #{self.id} - {self.supplier.name} - {self.status}"
+
+class Expense(models.Model):
+    name = models.CharField(max_length=100)
+    amount = models.FloatField()
+    date = models.DateField()
+
+    def __str__(self):
+        return f"{self.name} ₹{self.amount}"
+
+
+class Payment(models.Model):
+    customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
+    amount = models.FloatField()
+    method = models.CharField(max_length=10, default="cash")
+    date = models.DateField(auto_now_add=True)
+
+
+class StockMovement(models.Model):
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    change = models.FloatField()               # + కొనుగోలు, - అమ్మకం
+    reason = models.CharField(max_length=20)   # sale / purchase / adjust
+    ref = models.CharField(max_length=30, blank=True)  # bill no లేదా order id
+    created_at = models.DateTimeField(auto_now_add=True)

@@ -53,4 +53,10 @@ def run():
     Customer.objects.create(name="Suresh", phone="9000000003", balance_due=0)
     Customer.objects.create(name="Padma", phone="9000000004", balance_due=2300)
 
+    for p in Product.objects.all():
+        p.purchase_price = round(p.price * 0.8, 2)
+        p.save()
+    Product.objects.filter(name="Milk").update(expiry_date=date.today() + timedelta(days=2))
+    Product.objects.filter(name="Biscuits").update(expiry_date=date.today() + timedelta(days=5))
+    
     print("Demo డేటా సిద్ధం!")

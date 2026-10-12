@@ -58,6 +58,9 @@ def dashboard_api(request):
         "out_of_stock": out_of_stock,
         "credit_total": sum(c["balance_due"] for c in tools.pending_credit()),
         "pending_orders": __import__("shop.models", fromlist=["ReorderOrder"]).ReorderOrder.objects.filter(status="draft").count(),
+        "profit": tools.profit_summary(n),
+        "expiry": tools.expiry_alerts(7),
+    
     })
 
 def orders_api(request):
