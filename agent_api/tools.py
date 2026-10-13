@@ -38,10 +38,16 @@ def today_sales() -> dict:
     total = qs.aggregate(t=Sum("total_amount"))["t"] or 0
     return {"date": str(date.today()), "total_amount": total, "number_of_sales": qs.count()}
 
-
 def pending_credit() -> list:
-    cs = Customer.objects.filter(balance_due__gt=0).order_by("-balance_due")
-    return [{"name": c.name, "balance_due": c.balance_due, "phone": c.phone} for c in cs]
+    """బాకీ ఉన్న కస్టమర్లు, ఎన్ని రోజులుగా బాకీ ఉన్నారో (days) తో, పాతవి మొదట."""
+    today = date.today()
+    rows = []
+    for c in Customer.objects.filter(balance_due__gt=0):
+        days = (today - c.credit_since).days if c.credit_since else None
+        rows.append({"name": c.name, "balance_due": c.balance_due,
+                     "phone": c.phone, "days": days})
+    rows.sort(key=lambda r: (-(r["days"] if r["days"] is not None else -1), -r["balance_due"]))
+    return rows
 
 def predict_stockout(product_name: str) -> dict:
     p = _find(product_name)
@@ -142,12 +148,13 @@ def record_sale(product_name: str, quantity: float, payment_method: str = "cash"
     p.save()
     StockMovement.objects.create(product=p, change=-quantity, reason="sale", ref=sale.bill_no)
     if cust:
+        if cust.balance_due <= 0 or not cust.credit_since:
+            cust.credit_since = date.today()      # కొత్త బాకీ మొదలైన రోజు
         cust.balance_due += total
         cust.save()
     return {"success": True, "bill_no": sale.bill_no, "product": p.telugu_name,
             "quantity": quantity, "unit": p.unit, "total": total,
             "payment_method": payment_method, "stock_left": p.stock}
-
 
 def record_payment(customer_name: str, amount: float, method: str = "cash") -> dict:
     """కస్టమర్ చెల్లించిన బాకీ (పూర్తి లేదా కొంత) నమోదు చేసి balance తగ్గిస్తుంది."""
@@ -157,6 +164,8 @@ def record_payment(customer_name: str, amount: float, method: str = "cash") -> d
     if amount <= 0 or amount > c.balance_due:
         return {"success": False, "message": f"మొత్తం సరిగా లేదు. బాకీ ₹{c.balance_due}"}
     c.balance_due -= amount
+    if c.balance_due <= 0:
+        c.credit_since = None                      # పూర్తిగా చెల్లిస్తే రీసెట్
     c.save()
     Payment.objects.create(customer=c, amount=amount, method=method)
     return {"success": True, "customer": c.name, "paid": amount, "balance_left": c.balance_due}

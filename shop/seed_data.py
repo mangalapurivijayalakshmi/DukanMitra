@@ -48,10 +48,10 @@ def run():
             )
 
     # బాకీ ఉన్న కస్టమర్లు
-    Customer.objects.create(name="Ramesh", phone="9000000001", balance_due=1200)
-    Customer.objects.create(name="Lakshmi", phone="9000000002", balance_due=450)
+    Customer.objects.create(name="Ramesh", phone="9000000001", balance_due=1200, credit_since=date.today() - timedelta(days=20))
+    Customer.objects.create(name="Lakshmi", phone="9000000002", balance_due=450, credit_since=date.today() - timedelta(days=5))
     Customer.objects.create(name="Suresh", phone="9000000003", balance_due=0)
-    Customer.objects.create(name="Padma", phone="9000000004", balance_due=2300)
+    Customer.objects.create(name="Padma", phone="9000000004", balance_due=2300, credit_since=date.today() - timedelta(days=45))
 
     for p in Product.objects.all():
         p.purchase_price = round(p.price * 0.8, 2)

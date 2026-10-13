@@ -68,6 +68,14 @@
   .billrow { display:flex; justify-content:space-between; align-items:center; padding:4px 0; font-size:14px; }
   .billrow input { width:70px; padding:4px; border:1px solid #ccc; border-radius:6px; }
   .fest-head { background:#fff8e1; border-radius:10px; padding:8px 10px; margin-bottom:8px; font-size:14px; }
+  .age { font-size:11px; padding:2px 8px; border-radius:10px; color:#fff; margin-right:4px; }
+  .age-red { background:#c62828; } .age-orange { background:#f57c00; } .age-green { background:#2e7d32; }
+  .overdue { background:#ffebee; color:#b71c1c; border-radius:10px; padding:8px 10px; margin-bottom:8px; font-size:14px; }
+  .crow { padding:8px 0; border-bottom:1px solid #eee; }
+  .crow .top { display:flex; justify-content:space-between; align-items:center; gap:6px; font-size:14px; }
+  .crow .btns { display:flex; gap:6px; margin-top:6px; flex-wrap:wrap; }
+  .crow .btns button { flex:1; min-width:90px; font-size:12px; padding:5px 8px; border:none; border-radius:8px; color:#fff; cursor:pointer; }
+
 </style>
 </head>
 <body>
@@ -121,6 +129,7 @@
         <button data-q="ఏ వస్తువులు అయిపోతున్నాయి?">⚠️ అయిపోతున్నవి</button>
         <button data-q="బియ్యం స్టాక్ ఎంత ఉంది? ఎన్ని రోజులు వస్తుంది?">🌾 బియ్యం</button>
         <button data-q="రమేష్ ఎంత బాకీ ఉన్నాడు?">👤 రమేష్ బాకీ</button>
+        <button data-q="ఎవరి బాకీ ఎక్కువ రోజులుగా ఉంది?">⏰ పాత బాకీలు</button>
       </div>
       <input type="file" id="billfile" accept="image/*" capture="environment" hidden>
       <div id="orders"></div>
@@ -228,14 +237,26 @@ async function loadDash() {
       $("low").innerHTML = "అన్నీ సరిపడా ఉన్నాయి ✅";
     }
 
-    $("credit").innerHTML = d.credit.length ? d.credit.map(c => {
-      const text = `నమస్తే ${c.name} గారు 🙏\nమీ బాకీ ₹${c.balance_due} ఉంది. వీలైనప్పుడు చెల్లించగలరు.\nధన్యవాదాలు - DukanMitra`;
-      return `<div class="item"><span>${c.name}</span>
-        <span>₹${c.balance_due}
-          <a class="wa-btn" href="${waLink(c.phone, text)}" target="_blank">📲 రిమైండర్</a>
-          <button class="wa-btn pay-btn" onclick="pay('${c.name}', ${c.balance_due})">💸 చెల్లించారు</button>
-        </span></div>`;
-    }).join("") : "బాకీలు లేవు";
+    const oldDue = d.credit.filter(c => c.days !== null && c.days >= 30);
+    const oldTotal = oldDue.reduce((s, c) => s + c.balance_due, 0);
+    const warn = oldDue.length
+      ? `<div class="overdue">⚠️ 30+ రోజుల బాకీ: <b>₹${oldTotal}</b> (${oldDue.length} కస్టమర్లు)</div>` : "";
+
+    $("credit").innerHTML = warn + (d.credit.length ? d.credit.map(c => {
+      const dd = c.days;
+      const cls = dd === null ? "" : dd >= 30 ? "age-red" : dd >= 15 ? "age-orange" : "age-green";
+      const badge = dd === null ? "" : `<span class="age ${cls}">${dd} రోజులు</span>`;
+      const since = dd ? `\nఇది ${dd} రోజులుగా పెండింగ్‌లో ఉంది.` : "";
+      const text = `నమస్తే ${c.name} గారు 🙏\nమీ బాకీ ₹${c.balance_due} ఉంది.${since}\nవీలైనప్పుడు చెల్లించగలరు.\nధన్యవాదాలు - DukanMitra`;
+      return `<div class="crow">
+                <div class="top"><span>${c.name} ${c.age_tag || ""}</span><b>₹${c.balance_due}</b></div>
+                <div class="btns">
+                  <button style="background:#25d366" onclick="remind('${c.name}')">📲 రిమైండర్</button>
+                  <button style="background:#1b8a4b" onclick="pay('${c.name}')">💰 చెల్లించారు</button>
+                </div>
+              </div>`
+      
+    }).join("") : "బాకీలు లేవు");
 
     const p = d.profit;
     $("profit").innerHTML = `

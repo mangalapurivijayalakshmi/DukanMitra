@@ -42,7 +42,9 @@ class Customer(models.Model):
     name = models.CharField(max_length=100)
     phone = models.CharField(max_length=15, blank=True)
     balance_due = models.FloatField(default=0)       # బాకీ (udhar)
-
+    credit_since = models.DateField(null=True, blank=True)   # బాకీ మొదలైన తేదీ
+    
+    
     def __str__(self):
         return f"{self.name} - ₹{self.balance_due}"
 
