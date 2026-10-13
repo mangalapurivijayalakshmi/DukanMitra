@@ -1,10 +1,13 @@
 import json
+import struct
+import zlib
 from datetime import date, timedelta
-from django.http import JsonResponse
+from functools import lru_cache
+from django.http import JsonResponse, HttpResponse, Http404
 from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
 from django.db.models import Sum
-from . import tools, bill
+from . import tools, bill, festival
 from .agent import chat
 
 
@@ -61,6 +64,7 @@ def dashboard_api(request):
         "pending_orders": ReorderOrder.objects.filter(status="draft").count(),
         "profit": tools.profit_summary(n),
         "expiry": tools.expiry_alerts(7),
+        "festival": festival.festival_advice(),
     })
 
 
@@ -124,3 +128,86 @@ def apply_bill_api(request):
         return JsonResponse({"error": "POST only"}, status=405)
     data = json.loads(request.body)
     return JsonResponse(bill.apply_bill(data.get("rows", [])))
+
+
+# ---------------- 📱 PWA ----------------
+
+def manifest(request):
+    return JsonResponse({
+        "name": "DukanMitra - తెలుగు AI దుకాణ సహాయకుడు",
+        "short_name": "DukanMitra",
+        "description": "కిరాణా దుకాణదారుల కోసం తెలుగు AI సహాయకుడు",
+        "start_url": "/",
+        "scope": "/",
+        "display": "standalone",
+        "background_color": "#f1f8f3",
+        "theme_color": "#1b8a4b",
+        "lang": "te",
+        "icons": [
+            {"src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable"},
+            {"src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable"},
+        ],
+    }, content_type="application/manifest+json")
+
+
+SW_JS = """
+const CACHE = "dukanmitra-v1";
+self.addEventListener("install", e => {
+  e.waitUntil(caches.open(CACHE).then(c => c.addAll(["/", "/manifest.json"])));
+  self.skipWaiting();
+});
+self.addEventListener("activate", e => {
+  e.waitUntil(caches.keys().then(keys =>
+    Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))));
+  self.clients.claim();
+});
+self.addEventListener("fetch", e => {
+  const req = e.request;
+  if (req.method !== "GET") return;
+  const url = new URL(req.url);
+  if (url.origin !== location.origin) return;
+  const isApi = url.pathname.startsWith("/api/");
+  const cacheableApi = url.pathname.startsWith("/api/dashboard") || url.pathname.startsWith("/api/orders");
+  if (isApi && !cacheableApi) return;
+  e.respondWith(
+    fetch(req).then(res => {
+      if (res.ok) { const copy = res.clone(); caches.open(CACHE).then(c => c.put(req, copy)); }
+      return res;
+    }).catch(() => caches.match(req))
+  );
+});
+"""
+
+
+def service_worker(request):
+    resp = HttpResponse(SW_JS, content_type="application/javascript")
+    resp["Service-Worker-Allowed"] = "/"
+    resp["Cache-Control"] = "no-cache"
+    return resp
+
+
+@lru_cache(maxsize=4)
+def _icon_png(size):
+    bg, fg = (27, 138, 75), (255, 255, 255)
+    c, r_out, r_in = size / 2, size * 0.34, size * 0.20
+    raw = bytearray()
+    for y in range(size):
+        raw.append(0)
+        for x in range(size):
+            d = ((x - c) ** 2 + (y - c) ** 2) ** 0.5
+            raw.extend(fg if r_in <= d <= r_out else bg)
+
+    def chunk(t, data):
+        return (struct.pack(">I", len(data)) + t + data +
+                struct.pack(">I", zlib.crc32(t + data) & 0xffffffff))
+
+    return (b"\x89PNG\r\n\x1a\n"
+            + chunk(b"IHDR", struct.pack(">IIBBBBB", size, size, 8, 2, 0, 0, 0))
+            + chunk(b"IDAT", zlib.compress(bytes(raw), 9))
+            + chunk(b"IEND", b""))
+
+
+def icon(request, size):
+    if size not in (192, 512):
+        raise Http404
+    return HttpResponse(_icon_png(size), content_type="image/png")

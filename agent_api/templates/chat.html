@@ -4,13 +4,18 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>DukanMitra</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🛒</text></svg>">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#1b8a4b">
+<link rel="icon" href="/icon-192.png">
+<link rel="apple-touch-icon" href="/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
 <style>
   :root { --g:#1b8a4b; --gd:#146c3a; --bg:#f1f8f3; }
   * { box-sizing: border-box; }
   body { margin:0; font-family:"Segoe UI",sans-serif; background:var(--bg); color:#222; }
   header { background:linear-gradient(90deg,var(--gd),var(--g)); color:#fff; padding:14px 24px; display:flex; align-items:center; gap:12px; }
   header h1 { margin:0; font-size:22px; } header span { opacity:.85; font-size:13px; }
+  #install { display:none; margin-left:auto; background:#fff; color:var(--gd); border:none; border-radius:16px; padding:7px 14px; font-size:13px; cursor:pointer; font-weight:600; }
   .page { max-width:1400px; margin:0 auto; padding:16px; }
   .kpis { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:16px; }
   .kpi { background:#fff; border-radius:14px; padding:14px 16px; box-shadow:0 2px 8px rgba(0,0,0,.08); border-left:5px solid var(--g); }
@@ -26,7 +31,7 @@
   .bar { height:6px; background:#eee; border-radius:4px; margin:2px 0 6px; }
   .bar i { display:block; height:100%; background:#e53935; border-radius:4px; }
   .bar.g i { background:var(--g); }
-  #credit .item, #best .item { border-bottom:1px solid #eee; }
+  #credit .item, #best .item, #festival .item { border-bottom:1px solid #eee; }
   #chart { display:flex; align-items:flex-end; gap:6px; height:150px; padding-top:8px; overflow-x:auto; }
   #chart div { flex:1; min-width:34px; text-align:center; font-size:12px; color:#333; }
   #chart i { display:block; background:linear-gradient(var(--g),#6fcf97); border-radius:6px 6px 0 0; min-height:3px; }
@@ -62,12 +67,14 @@
   .chatcol { position:sticky; top:12px; }
   .billrow { display:flex; justify-content:space-between; align-items:center; padding:4px 0; font-size:14px; }
   .billrow input { width:70px; padding:4px; border:1px solid #ccc; border-radius:6px; }
+  .fest-head { background:#fff8e1; border-radius:10px; padding:8px 10px; margin-bottom:8px; font-size:14px; }
 </style>
 </head>
 <body>
 <header>
   <div style="font-size:28px">🛒</div>
   <div><h1>DukanMitra</h1><span>తెలుగు AI దుకాణ సహాయకుడు</span></div>
+  <button id="install">📱 యాప్ ఇన్‌స్టాల్</button>
 </header>
 
 <div class="page">
@@ -91,6 +98,7 @@
         <div id="chart"></div>
       </div>
       <div class="card"><h3>🏆 ఎక్కువగా అమ్ముడైనవి</h3><div id="best"></div></div>
+      <div class="card"><h3>🎉 పండుగ సూచన</h3><div id="festival">...</div></div>
     </div>
 
     <div>
@@ -107,6 +115,7 @@
         <button id="qwa">📲 సారాంశం WhatsApp</button>
         <button id="qbill">📸 బిల్ ఫోటో</button>
         <button id="qdraft">📦 ఆర్డర్ తయారు</button>
+        <button data-q="రాబోయే పండుగకు ఏం కొనాలి?">🎉 పండుగ</button>
         <button data-q="ఈరోజు అమ్మకాలు ఎంత?">💵 ఈరోజు అమ్మకాలు</button>
         <button data-q="ఈ వారం ఏ వస్తువు ఎక్కువ అమ్ముడైంది?">🏆 ఎక్కువ అమ్ముడైనది</button>
         <button data-q="ఏ వస్తువులు అయిపోతున్నాయి?">⚠️ అయిపోతున్నవి</button>
@@ -168,6 +177,29 @@ async function loadDash() {
     $("best").innerHTML = d.best.length ? d.best.map(b =>
       `<div class="item"><span>${b.name} (${b.qty} ${b.unit})</span><span>₹${b.amt}</span></div>
        <div class="bar g"><i style="width:${b.amt / bmax * 100}%"></i></div>`).join("") : "డేటా లేదు";
+
+    /* 🎉 పండుగ సూచన */
+    const f = d.festival;
+    if (f && f.found) {
+      const frows = f.items.map(i =>
+        `<div class="item"><span>${i.product}</span><span>కొనండి: <b>${i.suggested_qty} ${i.unit}</b> <small>(ఉన్నది ${i.stock})</small></span></div>`).join("");
+      const fg = {};
+      f.items.forEach(i => {
+        if (!i.supplier) return;
+        (fg[i.supplier] ||= { phone: i.supplier_phone, items: [] }).items.push(i);
+      });
+      const fbtns = Object.entries(fg).map(([name, g]) => {
+        const lines = g.items.map(i => `• ${i.product}: ${i.suggested_qty} ${i.unit}`).join("\n");
+        const text = `నమస్తే ${name} 🙏\n${f.name} కోసం ఈ సరుకు పంపగలరు:\n${lines}\nధన్యవాదాలు - DukanMitra`;
+        return `<a class="wa-btn big" href="${waLink(g.phone, text)}" target="_blank">🎉 ${name} కి పండుగ ఆర్డర్</a>`;
+      }).join("");
+      $("festival").innerHTML =
+        `<div class="fest-head"><b>${f.name}</b> కి ${f.days_left} రోజులు (${f.date})<br>
+         <small>అమ్మకాలు సుమారు ${f.boost_percent}% పెరగవచ్చు • అంచనా మాత్రమే</small></div>` +
+        (frows || "అవసరమైనంత స్టాక్ ఉంది ✅") + fbtns;
+    } else {
+      $("festival").innerHTML = "రాబోయే 30 రోజుల్లో పండుగ లేదు";
+    }
 
     if (d.low_stock.length) {
       const rows = d.low_stock.map(i => {
@@ -375,6 +407,25 @@ if (SR) {
   rec.onresult = e => send(e.results[0][0].transcript);
   mic.onclick = () => rec.start();
 } else { mic.style.display = "none"; }
+
+/* ---------- 📱 PWA ---------- */
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("/sw.js").catch(err => console.error("SW లోపం:", err));
+}
+let deferredPrompt = null;
+window.addEventListener("beforeinstallprompt", e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  $("install").style.display = "inline-block";
+});
+$("install").onclick = async () => {
+  if (!deferredPrompt) return;
+  deferredPrompt.prompt();
+  await deferredPrompt.userChoice;
+  deferredPrompt = null;
+  $("install").style.display = "none";
+};
+window.addEventListener("appinstalled", () => { $("install").style.display = "none"; });
 
 loadDash(); loadOrders();
 add("bot", "నమస్తే! నేను DukanMitra. స్టాక్, ధరలు, అమ్మకాలు, బాకీల గురించి అడగండి.\nఉదాహరణ: రమేష్ కి 2 కిలో చక్కెర ఉద్దెర అమ్మాను");

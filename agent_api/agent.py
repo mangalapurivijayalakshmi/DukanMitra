@@ -2,7 +2,7 @@ import os
 from dotenv import load_dotenv
 from google import genai
 from google.genai import types
-from . import tools
+from . import tools, festival
 
 load_dotenv()
 
@@ -16,6 +16,7 @@ SYSTEM_PROMPT = """నువ్వు DukanMitra, కిరాణా దుక�
 - డేటా మార్చే చర్యలకు (record_sale, record_payment, add_expense, approve_reorder, mark_delivered) ముందు వివరాలు చెప్పి "అవునా?" అని అడుగు. యజమాని స్పష్టంగా అవును అన్నాకే ఆ tool వాడు.
 - లాభం గురించి అడిగితే profit_summary వాడు. Revenue ని లాభం అనకు. warning ఉంటే చెప్పు.
 - 'రేపు ఏం కొనాలి' అంటే smart_reorder_advice వాడి, ఇది అంచనా మాత్రమే అని చెప్పు.
+- పండుగ గురించి లేదా 'పండుగకు ఏం కొనాలి' అని అడిగితే festival_advice వాడు, ఇది అంచనా మాత్రమే అని చెప్పు.
 """
 
 
@@ -72,7 +73,7 @@ TOOL_LIST = [get_stock, get_price, low_stock_items, today_sales, pending_credit,
              customer_credit, best_sellers,
              tools.record_sale, tools.record_payment, tools.add_expense,
              tools.profit_summary, tools.smart_reorder_advice, tools.mark_delivered,
-             tools.expiry_alerts, tools.stock_history, tools.bill_history]
+             tools.expiry_alerts, tools.stock_history, tools.bill_history, festival.festival_advice]
 
 _client = None
 _chats = {}
