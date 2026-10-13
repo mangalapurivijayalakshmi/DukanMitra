@@ -1,7 +1,7 @@
 import json
 from datetime import date, timedelta
 from django.db.models import Sum, F
-from shop.models import Product, Sale, Customer, ReorderOrder
+from shop.models import Product, Sale, Customer, ReorderOrder, Expense, Payment, StockMovement
 
 
 def _find(name):
@@ -27,11 +27,11 @@ def get_price(product_name: str) -> dict:
 
 
 def low_stock_items() -> list:
-    items = Product.objects.filter(stock__lt=F("low_stock_limit"))
+    items = Product.objects.filter(stock__lt=F("low_stock_limit")).select_related("supplier")
     return [{"product": p.telugu_name, "stock": p.stock, "unit": p.unit,
              "limit": p.low_stock_limit,
-             "supplier": p.supplier.name if p.supplier else None} for p in items]
-
+             "supplier": p.supplier.name if p.supplier else None,
+             "supplier_phone": p.supplier.phone if p.supplier else ""} for p in items]
 
 def today_sales() -> dict:
     qs = Sale.objects.filter(date=date.today())
@@ -41,8 +41,7 @@ def today_sales() -> dict:
 
 def pending_credit() -> list:
     cs = Customer.objects.filter(balance_due__gt=0).order_by("-balance_due")
-    return [{"name": c.name, "balance_due": c.balance_due} for c in cs]
-
+    return [{"name": c.name, "balance_due": c.balance_due, "phone": c.phone} for c in cs]
 
 def predict_stockout(product_name: str) -> dict:
     p = _find(product_name)
@@ -96,6 +95,7 @@ def approve_reorder(order_id: int) -> dict:
     order.status = "approved"
     order.save()
     return {"success": True, "order_id": order.id, "supplier": order.supplier.name,
+            "supplier_phone": order.supplier.phone,
             "status": "approved", "message_to_send": order.message}
 
 

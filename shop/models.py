@@ -16,11 +16,11 @@ class Product(models.Model):
     stock = models.FloatField(default=0)             # ప్రస్తుత నిల్వ
     low_stock_limit = models.FloatField(default=10)  # ఇంతకంటే తక్కువైతే హెచ్చరిక
     price = models.FloatField(default=0)  # ఒక యూనిట్ ధర
-    purchase_price = models.FloatField(default=0)
-    expiry_date = models.DateField(null=True, blank=True)
     supplier = models.ForeignKey(
         Supplier, on_delete=models.SET_NULL, null=True, blank=True
     )
+    purchase_price = models.FloatField(default=0)
+    expiry_date = models.DateField(null=True, blank=True)
 
     def __str__(self):
         return f"{self.name} ({self.telugu_name})"
@@ -80,7 +80,7 @@ class Payment(models.Model):
 
 class StockMovement(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
-    change = models.FloatField()               # + కొనుగోలు, - అమ్మకం
-    reason = models.CharField(max_length=20)   # sale / purchase / adjust
-    ref = models.CharField(max_length=30, blank=True)  # bill no లేదా order id
+    change = models.FloatField()
+    reason = models.CharField(max_length=20)
+    ref = models.CharField(max_length=30, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
