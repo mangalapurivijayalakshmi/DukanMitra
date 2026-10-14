@@ -34,7 +34,17 @@
 - Severity: Low
 - Workaround: Reconnect in Inspector
 
-## 6. Gemini model deprecations and free quota
-- `gemini-2.5-flash` returned 404 for new users; free tier allowed only 20 requests/day on one model
+## 6. Gemini: model deprecation (404)
+- Task: Call `gemini-2.5-flash` with a new API key
+- Expected: model response
+- Actual: 404 NOT_FOUND "no longer available to new users"
 - Severity: Medium
-- Workaround: Switched to `gemini-3.5-flash-lite`
+- Workaround: Switched to a newer model listed in AI Studio
+- Suggestion: List currently available model IDs in the quickstart
+
+## 7. Gemini: free-tier quota exhausted (429)
+- Task: Test tool-calling agent repeatedly
+- Actual: 429 RESOURCE_EXHAUSTED, limit 20 requests/day per model; one chat question with tool calls uses several requests
+- Severity: Medium
+- Workaround: Switched to another model, moved some buttons to direct API calls (no LLM)
+- Suggestion: Show remaining quota in AI Studio and document requests-per-tool-call
