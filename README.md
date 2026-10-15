@@ -28,6 +28,21 @@ Millions of small shopkeepers in Telugu-speaking regions track stock and credit 
 - Telugu voice input (`te-IN`) and spoken replies (browser speech APIs)
 - Installable PWA, mobile-responsive
 
+## Screenshots
+| Dashboard | Chat: credit sale with confirmation |
+|---|---|
+| ![Dashboard](docs/dashboard.png) | ![Chat](docs/chat-sale.png) |
+
+**Supplier bill photo to stock entry** (the owner reviews before stock changes)
+
+| 1. Photo of the bill | 2. AI reads it, owner confirms |
+|---|---|
+| ![Bill photo](docs/bill-scan1.png) | ![Bill review](docs/bill-scan.png) |
+
+| Mobile view | MCP server in MCP Inspector (20 tools) |
+|---|---|
+| ![Mobile](docs/mobile.png) | ![MCP Inspector](docs/mcp_inspector.png) |
+
 ## Safety by design
 - Data-changing actions (record sale, record payment, approve reorder, add expense, mark delivered, bill stock entry) need explicit owner confirmation.
 - Numbers come from database tools, not from the model's guesses.
