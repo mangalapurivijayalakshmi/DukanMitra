@@ -135,7 +135,7 @@ Everything in this repository was built during the submission period (Aug 31 - O
 Login and multi-shop support, PostgreSQL, UPI payment links, demand forecasting with more history, PDF receipts, automated tests, more Indian languages.
 
 ## Author
-Solo project by Mangalapuri Vijayalakshmi (GitHub: [@mangalapurivijayalakshmi1432@gmail.com]
+Solo project by Mangalapuri Vijayalakshmi (GitHub: [@mangalapurivijayalakshmi]
 (https://github.com/mangalapurivijayalakshmi/DukanMitra)).
 
 ## License
