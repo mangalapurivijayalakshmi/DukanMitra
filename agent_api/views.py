@@ -19,24 +19,41 @@ logger = logging.getLogger(__name__)
 def home(request):
     return render(request, "chat.html")
 
-
 @csrf_exempt
 def chat_api(request):
     if request.method != "POST":
-        return JsonResponse({"error": "POST only"}, status=405)
-    data = json.loads(request.body)
-    session_id = data.get("session_id", "default")
-    message = data.get("message", "")
+        return JsonResponse({"success": False, "message": "POST only"}, status=405)
+
     try:
-        reply = chat(session_id, message)
-    except Exception as e:
-       logger.exception("Chat request failed")
-        if "429" in str(e):
+        data = json.loads(request.body)
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        return JsonResponse({"success": False, "message": "సరైన JSON data పంపండి."}, status=400)
+
+    if not isinstance(data, dict):
+        return JsonResponse({"success": False, "message": "JSON object అవసరం."}, status=400)
+
+    session_id = data.get("session_id")
+    message = data.get("message")
+
+    if not isinstance(session_id, str) or not session_id.strip():
+        return JsonResponse({"success": False, "message": "Session ID అవసరం."}, status=400)
+    if not isinstance(message, str) or not message.strip():
+        return JsonResponse({"success": False, "message": "మీ ప్రశ్నను నమోదు చేయండి."}, status=400)
+
+    try:
+        reply = chat(session_id.strip(), message.strip())
+    except Exception as error:
+        logger.exception("Chat request failed")
+        if "429" in str(error):
             reply = "ప్రస్తుతం AI సేవ పరిమితి అయిపోయింది. కొద్దిసేపటి తర్వాత ప్రయత్నించండి."
         else:
             reply = "క్షమించండి, లోపం జరిగింది. మళ్ళీ ప్రయత్నించండి."
-    return JsonResponse({"reply": reply})
+        return JsonResponse({"success": False, "message": reply, "reply": reply}, status=503)
 
+    if not isinstance(reply, str) or not reply.strip():
+        return JsonResponse({"success": False, "message": "AI నుంచి సరైన సమాధానం రాలేదు."}, status=502)
+
+    return JsonResponse({"success": True, "reply": reply})
 
 def dashboard_api(request):
     from shop.models import Sale, Product, ReorderOrder
