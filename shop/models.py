@@ -1,5 +1,11 @@
-from django.db import models
+import uuid
+from datetime import timedelta
 
+from django.db import models
+from django.utils import timezone
+
+def pending_action_expiry():
+    return timezone.now() + timedelta(minutes=10)
 
 class Supplier(models.Model):
     name = models.CharField(max_length=100)
@@ -86,3 +92,87 @@ class StockMovement(models.Model):
     reason = models.CharField(max_length=20)
     ref = models.CharField(max_length=30, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+
+class PendingAction(models.Model):
+    class ActionType(models.TextChoices):
+        RECORD_SALE = "record_sale", "Record sale"
+        RECORD_PAYMENT = "record_payment", "Record payment"
+        ADD_EXPENSE = "add_expense", "Add expense"
+        APPROVE_REORDER = "approve_reorder", "Approve reorder"
+        CANCEL_REORDER = "cancel_reorder", "Cancel reorder"
+        MARK_DELIVERED = "mark_delivered", "Mark delivered"
+        APPLY_BILL = "apply_bill", "Apply bill"
+
+    class Status(models.TextChoices):
+        PENDING = "pending", "Pending"
+        EXECUTING = "executing", "Executing"
+        EXECUTED = "executed", "Executed"
+        CANCELLED = "cancelled", "Cancelled"
+        EXPIRED = "expired", "Expired"
+        FAILED = "failed", "Failed"
+
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+    )
+
+    session_key = models.CharField(
+        max_length=64,
+        db_index=True,
+        editable=False,
+    )
+
+    action_type = models.CharField(
+        max_length=30,
+        choices=ActionType.choices,
+    )
+
+    arguments = models.JSONField(
+        default=dict,
+    )
+
+    preview = models.JSONField(
+        default=dict,
+    )
+
+    status = models.CharField(
+        max_length=12,
+        choices=Status.choices,
+        default=Status.PENDING,
+    )
+
+    result = models.JSONField(
+        default=dict,
+        blank=True,
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+    )
+
+    expires_at = models.DateTimeField(
+        default=pending_action_expiry,
+    )
+
+    executed_at = models.DateTimeField(
+        null=True,
+        blank=True,
+    )
+
+    class Meta:
+        ordering = ["-created_at"]
+
+        indexes = [
+            models.Index(
+                fields=["session_key", "status"],
+                name="pending_session_status_idx",
+            ),
+        ]
+
+    @property
+    def is_expired(self):
+        return timezone.now() >= self.expires_at
+
+    def __str__(self):
+        return f"{self.action_type} - {self.status} - {self.id}"
