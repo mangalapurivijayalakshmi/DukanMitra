@@ -1,946 +1,2462 @@
 <!DOCTYPE html>
 <html lang="te">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>DukanMitra</title>
-<link rel="manifest" href="/manifest.json">
-<meta name="theme-color" content="#1b8a4b">
-<link rel="icon" href="/icon-192.png">
-<link rel="apple-touch-icon" href="/icon-192.png">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<style>
-  :root { --g:#1b8a4b; --gd:#146c3a; --bg:#f1f8f3; }
-  * { box-sizing: border-box; }
-  body { margin:0; font-family:"Segoe UI",sans-serif; background:var(--bg); color:#222; }
-  header { background:linear-gradient(90deg,var(--gd),var(--g)); color:#fff; padding:14px 24px; display:flex; align-items:center; gap:12px; }
-  header h1 { margin:0; font-size:22px; } header span { opacity:.85; font-size:13px; }
-  #install { display:none; margin-left:auto; background:#fff; color:var(--gd); border:none; border-radius:16px; padding:7px 14px; font-size:13px; cursor:pointer; font-weight:600; }
-  .page { max-width:1400px; margin:0 auto; padding:16px; }
-  .kpis { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:16px; }
-  .kpi { background:#fff; border-radius:14px; padding:14px 16px; box-shadow:0 2px 8px rgba(0,0,0,.08); border-left:5px solid var(--g); }
-  .kpi.warn { border-left-color:#e53935; } .kpi.amber { border-left-color:#f9a825; } .kpi.blue { border-left-color:#1e88e5; }
-  .kpi small { color:#666; font-size:12px; } .kpi b { display:block; font-size:26px; margin-top:4px; }
-  .grid { display:grid; grid-template-columns:1fr 1fr 1.3fr; gap:16px; align-items:start; }
-  @media (max-width:1100px){ .grid{ grid-template-columns:1fr 1fr; } .chatcol{ grid-column:1 / -1; position:static !important; } }
-  @media (max-width:700px){ .kpis{ grid-template-columns:1fr 1fr; } .grid{ grid-template-columns:1fr; } .kpi b{font-size:20px;} }
-  .card { background:#fff; border-radius:14px; padding:14px; box-shadow:0 2px 8px rgba(0,0,0,.08); margin-bottom:16px; }
-  .card h3 { margin:0 0 10px; font-size:15px; color:var(--gd); }
-  .item { display:flex; justify-content:space-between; align-items:center; padding:5px 0; font-size:14px; }
-  .low { color:#c62828; font-weight:600; }
-  .bar { height:6px; background:#eee; border-radius:4px; margin:2px 0 6px; }
-  .bar i { display:block; height:100%; background:#e53935; border-radius:4px; }
-  .bar.g i { background:var(--g); }
-  #credit .item, #best .item, #festival .item { border-bottom:1px solid #eee; }
-  #chart { display:flex; align-items:flex-end; gap:6px; height:150px; padding-top:8px; overflow-x:auto; }
-  #chart div { flex:1; min-width:34px; text-align:center; font-size:12px; color:#333; }
-  #chart i { display:block; background:linear-gradient(var(--g),#6fcf97); border-radius:6px 6px 0 0; min-height:3px; }
-  .alert { background:#ffebee; color:#b71c1c; border-radius:10px; padding:8px 12px; margin-bottom:12px; font-size:14px; display:none; }
-  #log { height:50vh; overflow-y:auto; padding:6px; }
-  .bubble { max-width:88%; padding:9px 12px; border-radius:14px; margin:6px 0; white-space:pre-wrap; line-height:1.4; font-size:15px; }
-  .me { background:var(--g); color:#fff; margin-left:auto; border-bottom-right-radius:4px; }
-  .bot { background:#e9f5ee; border-bottom-left-radius:4px; }
-  .quick { display:flex; flex-wrap:wrap; gap:6px; margin:8px 0; }
-  .quick button { background:#fff; border:1px solid var(--g); color:var(--gd); border-radius:16px; padding:6px 12px; cursor:pointer; font-size:13px; }
-  .quick button:hover { background:var(--g); color:#fff; }
-  #row { display:flex; gap:6px; }
-  #msg { flex:1; min-width:0; padding:11px; font-size:15px; border:1px solid #ccc; border-radius:10px; }
-  #send { background:var(--g); color:#fff; border:none; border-radius:10px; padding:0 16px; font-size:15px; cursor:pointer; }
-  #mic { background:#e53935; color:#fff; border:none; border-radius:50%; width:44px; height:44px; font-size:18px; cursor:pointer; }
-  #mic.on { animation:pulse 1s infinite; }
-  @keyframes pulse { 50% { box-shadow:0 0 0 8px rgba(229,57,53,.25);} }
-  .order { border:1px solid #cfe8d8; background:#f7fcf9; border-radius:12px; padding:10px; margin:8px 0; }
-  .order b { color:var(--gd); } .order ul { margin:6px 0; padding-left:18px; font-size:14px; }
-  .order button { border:none; border-radius:8px; padding:6px 12px; cursor:pointer; margin-right:6px; color:#fff; }
-  .ok { background:var(--g); } .no { background:#9e9e9e; }
-  .head { display:flex; justify-content:space-between; align-items:center; }
-  #spk { background:none; border:1px solid #ccc; border-radius:8px; cursor:pointer; padding:2px 8px; }
-  .tag { font-size:11px; padding:2px 8px; border-radius:10px; color:#fff; margin-left:6px; }
-  .t-crit { background:#c62828; } .t-low { background:#f9a825; }
-  .filter { margin-left:6px; }
-  .filter button { border:1px solid var(--g); background:#fff; color:var(--gd); border-radius:12px; padding:3px 10px; cursor:pointer; font-size:12px; }
-  .filter button.act { background:var(--g); color:#fff; }
-  .wa-btn { display:inline-block; background:#25D366; color:#fff !important; text-decoration:none; border-radius:16px; padding:3px 10px; font-size:13px; margin-left:6px; }
-  .wa-btn.big { display:block; text-align:center; padding:9px; margin-top:8px; font-size:14px; margin-left:0; }
-  .pay-btn { border:none; cursor:pointer; background:#1b8a4b; }
-  .sub { font-size:13px; color:#555; margin-bottom:4px; }
-  .chatcol { position:sticky; top:12px; }
-  .billrow { display:flex; justify-content:space-between; align-items:center; padding:4px 0; font-size:14px; }
-  .billrow input { width:70px; padding:4px; border:1px solid #ccc; border-radius:6px; }
-  .fest-head { background:#fff8e1; border-radius:10px; padding:8px 10px; margin-bottom:8px; font-size:14px; }
-  .age { font-size:11px; padding:2px 8px; border-radius:10px; color:#fff; margin-right:4px; }
-  .age-red { background:#c62828; } .age-orange { background:#f57c00; } .age-green { background:#2e7d32; }
-  .overdue { background:#ffebee; color:#b71c1c; border-radius:10px; padding:8px 10px; margin-bottom:8px; font-size:14px; }
-  .crow { padding:8px 0; border-bottom:1px solid #eee; }
-  .crow .top { display:flex; justify-content:space-between; align-items:center; gap:6px; font-size:14px; }
-  .crow .btns { display:flex; gap:6px; margin-top:6px; flex-wrap:wrap; }
-  .crow .btns button { flex:1; min-width:90px; font-size:12px; padding:5px 8px; border:none; border-radius:8px; color:#fff; cursor:pointer; }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
 
-  #credit .item { flex-wrap:wrap; gap:4px; }
-  #credit .item > span:last-child { display:flex; align-items:center; flex-wrap:wrap; gap:4px; justify-content:flex-end; }
-  #credit .wa-btn { margin-left:0; }
-/* ---------- Readability and desktop layout ---------- */
+  <title>DukanMitra</title>
 
-body {
-  font-size: 16px;
-  line-height: 1.55;
-}
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#1b8a4b">
+  <link rel="icon" href="/icon-192.png">
+  <link rel="apple-touch-icon" href="/icon-192.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
 
-.page {
-  width: 100%;
-  max-width: 1680px;
-  padding: 24px;
-}
+  <style>
+    :root {
+      --g: #1b8a4b;
+      --gd: #146c3a;
+      --bg: #f1f8f3;
+      --border: #dce8df;
+      --red: #c62828;
+      --muted: #59645c;
+    }
 
-.grid {
-  grid-template-columns:
-    minmax(0, 1fr)
-    minmax(0, 1fr)
-    minmax(360px, 1.25fr);
-  gap: 20px;
-}
+    * {
+      box-sizing: border-box;
+    }
 
-.grid > * {
-  min-width: 0;
-}
+    body {
+      margin: 0;
+      font-family: "Segoe UI", sans-serif;
+      font-size: 16px;
+      line-height: 1.55;
+      background: var(--bg);
+      color: #222;
+    }
 
-.kpis {
-  gap: 18px;
-  margin-bottom: 22px;
-}
+    button,
+    input {
+      font: inherit;
+    }
 
-.kpi {
-  padding: 20px;
-}
+    button,
+    a {
+      -webkit-tap-highlight-color: transparent;
+    }
 
-.kpi small {
-  font-size: 14px;
-}
+    button {
+      cursor: pointer;
+    }
 
-.kpi b {
-  font-size: 32px;
-}
+    button:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
 
-.card {
-  padding: 20px;
-  margin-bottom: 20px;
-}
+    button:focus-visible,
+    a:focus-visible,
+    input:focus-visible {
+      outline: 3px solid #1e88e5;
+      outline-offset: 3px;
+    }
 
-.card h3 {
-  font-size: 18px;
-  line-height: 1.5;
-  margin-bottom: 14px;
-}
+    [hidden] {
+      display: none !important;
+    }
 
-.item,
-.crow .top,
-.billrow {
-  font-size: 16px;
-  gap: 12px;
-}
+    header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 16px 24px;
+      background: linear-gradient(90deg, var(--gd), var(--g));
+      color: #fff;
+    }
 
-.item {
-  padding: 9px 0;
-}
+    .logo {
+      font-size: 30px;
+    }
 
-.item > span {
-  overflow-wrap: anywhere;
-}
+    header h1 {
+      margin: 0;
+      font-size: 24px;
+    }
 
-.sub {
-  font-size: 14px;
-}
+    header span {
+      font-size: 13px;
+      opacity: 0.9;
+    }
 
-.crow {
-  padding: 12px 0;
-}
+    #install {
+      margin-left: auto;
+      padding: 8px 14px;
+      border: 0;
+      border-radius: 18px;
+      background: #fff;
+      color: var(--gd);
+      font-size: 13px;
+      font-weight: 600;
+    }
 
-.crow .btns button {
-  font-size: 14px;
-  padding: 10px 12px;
-  min-height: 42px;
-}
+    .page {
+      width: 100%;
+      max-width: 1680px;
+      margin: 0 auto;
+      padding: 24px;
+    }
 
-.quick {
-  gap: 8px;
-  margin-bottom: 14px;
-}
+    .demo-note {
+      margin: 0 0 16px;
+      color: var(--muted);
+      font-size: 13px;
+    }
 
-.quick button {
-  font-size: 14px;
-  padding: 8px 12px;
-  min-height: 40px;
-}
+    .alert {
+      padding: 12px 14px;
+      margin-bottom: 16px;
+      border-radius: 10px;
+      background: #ffebee;
+      color: #a51f1f;
+      overflow-wrap: anywhere;
+    }
 
-.chatcol {
-  top: 16px;
-}
+    .alert button {
+      margin-left: 12px;
+      padding: 5px 10px;
+      border: 1px solid currentColor;
+      border-radius: 8px;
+      background: transparent;
+      color: inherit;
+    }
 
-#log {
-  height: clamp(320px, 46vh, 580px);
-  padding: 8px 2px;
-}
+    .kpis {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 18px;
+      margin-bottom: 22px;
+    }
 
-.bubble {
-  font-size: 16px;
-  line-height: 1.7;
-  padding: 12px 14px;
-  overflow-wrap: anywhere;
-}
+    .kpi {
+      padding: 20px;
+      background: #fff;
+      border-left: 5px solid var(--g);
+      border-radius: 14px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    }
 
-#row {
-  align-items: center;
-  gap: 8px;
-  margin-top: 14px;
-}
+    .kpi.blue {
+      border-left-color: #1e88e5;
+    }
 
-#msg {
-  font-size: 16px;
-  min-height: 48px;
-}
+    .kpi.warn {
+      border-left-color: #e53935;
+    }
 
-#send {
-  min-height: 48px;
-  padding: 0 18px;
-}
+    .kpi.amber {
+      border-left-color: #f9a825;
+    }
 
-#mic {
-  flex: 0 0 46px;
-  width: 46px;
-  height: 46px;
-}
+    .kpi small {
+      color: var(--muted);
+      font-size: 14px;
+    }
 
-button:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
+    .kpi b {
+      display: block;
+      margin-top: 4px;
+      font-size: 32px;
+      overflow-wrap: anywhere;
+    }
 
-button:focus-visible,
-a:focus-visible,
-input:focus-visible {
-  outline: 3px solid #1e88e5;
-  outline-offset: 3px;
-}
+    .grid {
+      display: grid;
+      grid-template-columns:
+        minmax(0, 1fr)
+        minmax(0, 1fr)
+        minmax(360px, 1.25fr);
+      gap: 20px;
+      align-items: start;
+    }
 
-#chart {
-  height: 180px;
-}
+    .grid > * {
+      min-width: 0;
+    }
 
-@media (max-width: 1200px) {
-  .grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
+    .card {
+      padding: 20px;
+      margin-bottom: 20px;
+      background: #fff;
+      border: 1px solid #e6eee8;
+      border-radius: 14px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
 
-  .chatcol {
-    grid-column: 1 / -1;
-    position: static;
-  }
-}
+    .card h3 {
+      margin: 0 0 14px;
+      color: var(--gd);
+      font-size: 18px;
+      line-height: 1.5;
+    }
 
-@media (max-width: 700px) {
-  header {
-    padding: 14px 16px;
-    gap: 8px;
-  }
+    .item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 9px 0;
+      font-size: 15px;
+    }
 
-  header h1 {
-    font-size: 21px;
-  }
+    .item > span {
+      overflow-wrap: anywhere;
+    }
 
-  .page {
-    padding: 12px;
-  }
+    .item > :last-child {
+      text-align: right;
+    }
 
-  .grid {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 0;
-  }
+    #best .item,
+    #festival .item {
+      border-bottom: 1px solid #eee;
+    }
 
-  .kpis {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 10px;
-  }
+    .sub {
+      margin: 4px 0 8px;
+      color: var(--muted);
+      font-size: 13px;
+      overflow-wrap: anywhere;
+    }
 
-  .kpi {
-    padding: 14px 12px;
-  }
+    .low {
+      color: var(--red);
+      font-weight: 600;
+    }
 
-  .kpi b {
-    font-size: 25px;
-  }
+    .bar {
+      height: 7px;
+      margin: 3px 0 8px;
+      overflow: hidden;
+      border-radius: 5px;
+      background: #edf0ee;
+    }
 
-  .kpi small {
-    font-size: 12px;
-  }
+    .bar i {
+      display: block;
+      height: 100%;
+      border-radius: inherit;
+      background: var(--g);
+    }
 
-  .card {
-    padding: 16px;
-  }
+    .filter {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 10px;
+    }
 
-  .card h3 {
-    font-size: 17px;
-  }
+    .filter button {
+      padding: 5px 12px;
+      border: 1px solid var(--g);
+      border-radius: 14px;
+      background: #fff;
+      color: var(--gd);
+      font-size: 13px;
+    }
 
-  #log {
-    height: 380px;
-  }
-}
+    .filter button.act {
+      background: var(--g);
+      color: #fff;
+    }
 
+    #chart {
+      display: flex;
+      align-items: flex-end;
+      gap: 8px;
+      height: 190px;
+      padding-top: 12px;
+      overflow-x: auto;
+    }
 
-</style>
+    .chart-column {
+      flex: 1;
+      min-width: 40px;
+      text-align: center;
+      color: #444;
+      font-size: 12px;
+    }
+
+    .chart-column small {
+      display: block;
+      white-space: nowrap;
+    }
+
+    .chart-column i {
+      display: block;
+      min-height: 3px;
+      margin-top: 5px;
+      border-radius: 6px 6px 0 0;
+      background: linear-gradient(var(--g), #6fcf97);
+    }
+
+    .chart-column.latest i {
+      background: #0d5c2e;
+    }
+
+    .chart-column.latest small {
+      font-weight: 700;
+    }
+
+    .tag,
+    .age {
+      display: inline-block;
+      padding: 2px 8px;
+      margin-left: 6px;
+      border-radius: 12px;
+      color: #fff;
+      font-size: 11px;
+    }
+
+    .t-crit,
+    .age-red {
+      background: #b71c1c;
+    }
+
+    .t-low,
+    .age-orange {
+      background: #a84b00;
+    }
+
+    .age-green {
+      background: #2e7d32;
+    }
+
+    .overdue {
+      padding: 10px;
+      margin-bottom: 10px;
+      border-radius: 10px;
+      background: #ffebee;
+      color: #a51f1f;
+      font-size: 14px;
+    }
+
+    .crow {
+      padding: 12px 0;
+      border-bottom: 1px solid #eee;
+    }
+
+    .crow:last-child {
+      border-bottom: 0;
+    }
+
+    .crow .top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      font-size: 15px;
+    }
+
+    .crow .top > span {
+      overflow-wrap: anywhere;
+    }
+
+    .btns {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .btns button {
+      flex: 1;
+      min-width: 100px;
+      min-height: 42px;
+      padding: 8px 10px;
+      border: 0;
+      border-radius: 8px;
+      color: #fff;
+      font-size: 13px;
+    }
+
+    .wa-btn {
+      display: inline-block;
+      padding: 8px 12px;
+      border-radius: 12px;
+      background: #167a3f;
+      color: #fff;
+      text-decoration: none;
+      font-size: 14px;
+      overflow-wrap: anywhere;
+    }
+
+    .wa-btn.big {
+      display: block;
+      margin-top: 8px;
+      text-align: center;
+    }
+
+    .fest-head {
+      padding: 10px;
+      margin-bottom: 10px;
+      border-radius: 10px;
+      background: #fff8e1;
+      font-size: 14px;
+    }
+
+    .chatcol {
+      position: sticky;
+      top: 16px;
+    }
+
+    .head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+    }
+
+    #spk {
+      padding: 5px 10px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: #fff;
+    }
+
+    .quick {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 8px 0 14px;
+    }
+
+    .quick button {
+      min-height: 38px;
+      padding: 7px 11px;
+      border: 1px solid var(--g);
+      border-radius: 16px;
+      background: #fff;
+      color: var(--gd);
+      font-size: 13px;
+    }
+
+    .quick button:hover:not(:disabled) {
+      background: var(--g);
+      color: #fff;
+    }
+
+    #orders-status {
+      color: var(--red);
+      font-size: 13px;
+    }
+
+    #log {
+      height: clamp(320px, 46vh, 580px);
+      padding: 8px 2px;
+      overflow-y: auto;
+    }
+
+    .bubble {
+      max-width: 90%;
+      padding: 12px 14px;
+      margin: 8px 0;
+      border-radius: 14px;
+      font-size: 16px;
+      line-height: 1.7;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+
+    .me {
+      margin-left: auto;
+      border-bottom-right-radius: 4px;
+      background: var(--g);
+      color: #fff;
+    }
+
+    .bot {
+      border-bottom-left-radius: 4px;
+      background: #e9f5ee;
+    }
+
+    #row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    #msg {
+      flex: 1;
+      width: 100%;
+      min-width: 0;
+      min-height: 48px;
+      padding: 11px;
+      border: 1px solid #b9c9bd;
+      border-radius: 10px;
+      font-size: 16px;
+    }
+
+    #send {
+      min-height: 48px;
+      padding: 0 16px;
+      border: 0;
+      border-radius: 10px;
+      background: var(--g);
+      color: #fff;
+    }
+
+    #mic {
+      flex: 0 0 46px;
+      width: 46px;
+      height: 46px;
+      padding: 0;
+      border: 0;
+      border-radius: 50%;
+      background: #d32f2f;
+      color: #fff;
+      font-size: 20px;
+    }
+
+    #mic.on {
+      animation: pulse 1s infinite;
+    }
+
+    @keyframes pulse {
+      50% {
+        box-shadow: 0 0 0 7px rgba(211, 47, 47, 0.2);
+      }
+    }
+
+    .order {
+      padding: 12px;
+      margin: 10px 0;
+      border: 1px solid #cfe8d8;
+      border-radius: 12px;
+      background: #f7fcf9;
+      overflow-wrap: anywhere;
+    }
+
+    .order b {
+      color: var(--gd);
+    }
+
+    .order ul {
+      padding-left: 20px;
+      margin: 8px 0;
+      font-size: 14px;
+    }
+
+    .order button {
+      min-height: 40px;
+      padding: 8px 12px;
+      border: 0;
+      border-radius: 8px;
+      color: #fff;
+      font-size: 14px;
+    }
+
+    .ok {
+      background: var(--g);
+    }
+
+    .no {
+      background: #616161;
+    }
+
+    .billrow {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 8px 0;
+      border-bottom: 1px solid #e4ece6;
+      font-size: 14px;
+    }
+
+    .billrow > span {
+      overflow-wrap: anywhere;
+    }
+
+    .billrow input {
+      width: 85px;
+      padding: 7px;
+      border: 1px solid #b9c9bd;
+      border-radius: 7px;
+    }
+
+    .bill-quantity {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    @media (max-width: 1200px) {
+      .grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .chatcol {
+        grid-column: 1 / -1;
+        position: static;
+      }
+    }
+
+    @media (max-width: 700px) {
+      header {
+        padding: 14px 16px;
+        gap: 8px;
+      }
+
+      header h1 {
+        font-size: 21px;
+      }
+
+      #install {
+        max-width: 115px;
+        padding: 7px 9px;
+        font-size: 12px;
+      }
+
+      .page {
+        padding: 12px;
+      }
+
+      .kpis {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+      }
+
+      .kpi {
+        padding: 14px 12px;
+      }
+
+      .kpi b {
+        font-size: 25px;
+      }
+
+      .kpi small {
+        font-size: 12px;
+      }
+
+      .grid {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 0;
+      }
+
+      .card {
+        padding: 16px;
+      }
+
+      .card h3 {
+        font-size: 17px;
+      }
+
+      #log {
+        height: 380px;
+      }
+
+      .item {
+        font-size: 14px;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      #mic.on {
+        animation: none;
+      }
+    }
+  </style>
 </head>
+
 <body>
-<header>
-  <div style="font-size:28px">🛒</div>
-  <div><h1>DukanMitra</h1><span>తెలుగు AI దుకాణ సహాయకుడు</span></div>
-  <button id="install">📱 యాప్ ఇన్‌స్టాల్</button>
-</header>
+  <!-- This file must be rendered as a Django template. -->
+  <form hidden aria-hidden="true">
+    {% csrf_token %}
+  </form>
 
-<div class="page">
-  <div class="alert" id="oos"></div>
-
-  <div class="kpis">
-    <div class="kpi"><small>ఈ రోజు ఆదాయం (అమ్మకాలు)</small><b id="k1">₹0</b><small id="k1s"></small></div>
-    <div class="kpi blue"><small>ఆదాయం (ఎంచుకున్న కాలం)</small><b id="k2">₹0</b><small id="k2s"></small></div>
-    <div class="kpi warn"><small>తక్కువ నిల్వ వస్తువులు</small><b id="k3">0</b><small>ఆర్డర్ అవసరం</small></div>
-    <div class="kpi amber"><small>మొత్తం బాకీలు</small><b id="k4">₹0</b><small id="k4s"></small></div>
-  </div>
-
-  <div class="grid">
-    <div>
-      <div class="card">
-        <h3>📈 అమ్మకాలు (ఆదాయం)
-          <span class="filter">
-            <button data-d="1">ఈ రోజు</button><button data-d="7" class="act">7 రోజులు</button><button data-d="30">30 రోజులు</button>
-          </span>
-        </h3>
-        <div id="chart"></div>
-      </div>
-      <div class="card"><h3>🏆 ఎక్కువగా అమ్ముడైనవి</h3><div id="best"></div></div>
-      <div class="card"><h3>🎉 పండుగ సూచన</h3><div id="festival">...</div></div>
-    </div>
+  <header>
+    <div class="logo" aria-hidden="true">🛒</div>
 
     <div>
-      <div class="card"><h3>⚠️ తక్కువ నిల్వ</h3><div id="low">...</div></div>
-      <div class="card"><h3>💰 బాకీలు (ఉద్దెర)</h3><div id="credit">...</div></div>
-      <div class="card"><h3>📈 లాభం</h3><div id="profit"></div></div>
-      <div class="card"><h3>⏳ గడువు హెచ్చరిక</h3><div id="expiry"></div></div>
+      <h1>DukanMitra</h1>
+      <span>తెలుగు AI దుకాణ సహాయకుడు</span>
     </div>
 
-    <div class="card chatcol">
-      <div class="head"><h3>💬 అడగండి</h3><button id="spk" title="వాయిస్ ఆన్/ఆఫ్">🔊</button></div>
-      <div class="quick">
-        <button id="qsum">📊 సారాంశం</button>
-        <button id="qwa">📲 సారాంశం WhatsApp</button>
-        <button id="qbill">📸 బిల్ ఫోటో</button>
-        <button id="qdraft">📦 ఆర్డర్ తయారు</button>
-        <button data-q="రాబోయే పండుగకు ఏం కొనాలి?">🎉 పండుగ</button>
-        <button data-q="ఈరోజు అమ్మకాలు ఎంత?">💵 ఈరోజు అమ్మకాలు</button>
-        <button data-q="ఈ వారం ఏ వస్తువు ఎక్కువ అమ్ముడైంది?">🏆 ఎక్కువ అమ్ముడైనది</button>
-        <button data-q="ఏ వస్తువులు అయిపోతున్నాయి?">⚠️ అయిపోతున్నవి</button>
-        <button data-q="బియ్యం స్టాక్ ఎంత ఉంది? ఎన్ని రోజులు వస్తుంది?">🌾 బియ్యం</button>
-        <button data-q="రమేష్ ఎంత బాకీ ఉన్నాడు?">👤 రమేష్ బాకీ</button>
-        <button data-q="ఎవరి బాకీ ఎక్కువ రోజులుగా ఉంది?">⏰ పాత బాకీలు</button>
-      </div>
-      <input type="file" id="billfile" accept="image/*" capture="environment" hidden>
-      <div id="orders"></div>
-      <div id="billbox"></div>
-      <div id="log"></div>
-      <div id="row">
-        <input id="msg" placeholder="తెలుగులో అడగండి...">
-        <button id="mic" title="మాట్లాడండి">🎤</button>
-        <button id="send">పంపు</button>
-      </div>
+    <button id="install" type="button" hidden>
+      📱 యాప్ ఇన్‌స్టాల్
+    </button>
+  </header>
+
+  <main class="page">
+    <p class="demo-note">
+      డెమో డేటా మాత్రమే • AI సూచనలు అంచనాలు •
+      మార్పులకు ముందు వివరాలు సరిచూడండి
+    </p>
+
+    <div id="dashboard-error" class="alert" role="alert" hidden>
+      <span id="dashboard-error-text"></span>
+      <button id="retry-dashboard" type="button">
+        మళ్లీ ప్రయత్నించు
+      </button>
     </div>
-  </div>
-</div>
 
-<script>
-const sid = "s" + Math.random().toString(36).slice(2);
-const log = document.getElementById("log"), msg = document.getElementById("msg");
-const $ = id => document.getElementById(id);
-let speak = true, DASH = null, DAYS = 7, BILL = [];
+    <div id="oos" class="alert" role="status" hidden></div>
 
-function waLink(phone, text) {
-  const p = (phone || "").replace(/\D/g, "");
-  const num = p ? (p.length === 10 ? "91" + p : p) : "";
-  return `https://wa.me/${num}?text=${encodeURIComponent(text)}`;
-}
+    <section class="kpis" aria-label="దుకాణ సారాంశం">
+      <div class="kpi">
+        <small>ఈ రోజు ఆదాయం (అమ్మకాలు)</small>
+        <b id="k1">—</b>
+        <small id="k1s">లోడ్ అవుతోంది...</small>
+      </div>
 
-$("spk").onclick = e => { speak = !speak; e.target.textContent = speak ? "🔊" : "🔇"; if (!speak) speechSynthesis.cancel(); };
+      <div class="kpi blue">
+        <small>ఆదాయం (ఎంచుకున్న కాలం)</small>
+        <b id="k2">—</b>
+        <small id="k2s">గత 7 రోజులు</small>
+      </div>
 
-function add(cls, text) {
-  const d = document.createElement("div");
-  d.className = "bubble " + cls; d.textContent = text;
-  log.appendChild(d); log.scrollTop = log.scrollHeight; return d;
-}
+      <div class="kpi warn">
+        <small>తక్కువ నిల్వ వస్తువులు</small>
+        <b id="k3">—</b>
+        <small>ఆర్డర్ అవసరం</small>
+      </div>
 
-async function loadDash() {
-  try {
-    const d = DASH = await (await fetch("/api/dashboard?days=" + DAYS)).json();
-    $("k1").textContent = "₹" + (d.sales.total_amount || 0);
-    $("k1s").textContent = d.sales.number_of_sales + " అమ్మకాలు";
-    $("k2").textContent = "₹" + d.week_total;
-    $("k2s").textContent = DAYS === 1 ? "ఈ రోజు" : "గత " + DAYS + " రోజులు";
-    $("k3").textContent = d.low_stock.length;
-    $("k4").textContent = "₹" + d.credit_total;
-    $("k4s").textContent = d.credit.length + " కస్టమర్లు";
+      <div class="kpi amber">
+        <small>మొత్తం బాకీలు</small>
+        <b id="k4">—</b>
+        <small id="k4s"></small>
+      </div>
+    </section>
 
-    const max = Math.max(1, ...d.week.map(x => x.total));
-    $("chart").innerHTML = d.week.map((x, idx) => {
-      const today = idx === d.week.length - 1;
-      return `<div><small style="font-weight:${today ? 700 : 400}">₹${x.total}</small>
-        <i style="height:${Math.round(x.total / max * 100)}px;${today ? 'background:#0d5c2e;' : ''}"></i>${x.day}</div>`;
-    }).join("");
+    <div class="grid">
+      <div>
+        <section class="card">
+          <h3>📈 అమ్మకాలు (ఆదాయం)</h3>
 
-    const bmax = Math.max(1, ...d.best.map(x => x.amt));
-    $("best").innerHTML = d.best.length ? d.best.map(b =>
-      `<div class="item"><span>${b.name} (${b.qty} ${b.unit})</span><span>₹${b.amt}</span></div>
-       <div class="bar g"><i style="width:${b.amt / bmax * 100}%"></i></div>`).join("") : "డేటా లేదు";
+          <div class="filter" aria-label="కాలాన్ని ఎంచుకోండి">
+            <button type="button" data-d="1" aria-pressed="false">
+              ఈ రోజు
+            </button>
+            <button
+              type="button"
+              data-d="7"
+              class="act"
+              aria-pressed="true"
+            >
+              7 రోజులు
+            </button>
+            <button type="button" data-d="30" aria-pressed="false">
+              30 రోజులు
+            </button>
+          </div>
 
-    /* 🎉 పండుగ సూచన */
-    const f = d.festival;
-    if (f && f.found) {
-      const frows = f.items.map(i =>
-        `<div class="item"><span>${i.product}</span><span>కొనండి: <b>${i.suggested_qty} ${i.unit}</b> <small>(ఉన్నది ${i.stock})</small></span></div>`).join("");
-      const fg = {};
-      f.items.forEach(i => {
-        if (!i.supplier) return;
-        (fg[i.supplier] ||= { phone: i.supplier_phone, items: [] }).items.push(i);
+          <div id="chart" aria-label="రోజువారీ అమ్మకాలు"></div>
+        </section>
+
+        <section class="card">
+          <h3>🏆 ఎక్కువగా అమ్ముడైనవి</h3>
+          <div id="best">లోడ్ అవుతోంది...</div>
+        </section>
+
+        <section class="card">
+          <h3>🎉 పండుగ సూచన</h3>
+          <div id="festival">లోడ్ అవుతోంది...</div>
+        </section>
+      </div>
+
+      <div>
+        <section class="card">
+          <h3>⚠️ తక్కువ నిల్వ</h3>
+          <div id="low">లోడ్ అవుతోంది...</div>
+        </section>
+
+        <section class="card">
+          <h3>💰 బాకీలు (ఉద్దెర)</h3>
+          <div id="credit">లోడ్ అవుతోంది...</div>
+        </section>
+
+        <section class="card">
+          <h3>📈 లాభం</h3>
+          <div id="profit">లోడ్ అవుతోంది...</div>
+        </section>
+
+        <section class="card">
+          <h3>⏳ గడువు హెచ్చరిక</h3>
+          <div id="expiry">లోడ్ అవుతోంది...</div>
+        </section>
+      </div>
+
+      <section class="card chatcol" aria-label="AI assistant">
+        <div class="head">
+          <h3>💬 అడగండి</h3>
+
+          <button
+            id="spk"
+            type="button"
+            title="వాయిస్ ఆన్/ఆఫ్"
+            aria-label="Spoken replies"
+            aria-pressed="true"
+          >
+            🔊
+          </button>
+        </div>
+
+        <div class="quick">
+          <button id="qsum" type="button">📊 సారాంశం</button>
+          <button id="qwa" type="button">📲 సారాంశం WhatsApp</button>
+          <button id="qbill" type="button">📸 బిల్ ఫోటో</button>
+          <button id="qdraft" type="button">📦 ఆర్డర్ తయారు</button>
+
+          <button type="button" data-q="రాబోయే పండుగకు ఏం కొనాలి?">
+            🎉 పండుగ
+          </button>
+
+          <button type="button" data-q="ఈరోజు అమ్మకాలు ఎంత?">
+            💵 ఈరోజు అమ్మకాలు
+          </button>
+
+          <button
+            type="button"
+            data-q="ఈ వారం ఏ వస్తువు ఎక్కువ అమ్ముడైంది?"
+          >
+            🏆 ఎక్కువ అమ్ముడైనది
+          </button>
+
+          <button type="button" data-q="ఏ వస్తువులు అయిపోతున్నాయి?">
+            ⚠️ అయిపోతున్నవి
+          </button>
+
+          <button
+            type="button"
+            data-q="బియ్యం స్టాక్ ఎంత ఉంది? ఎన్ని రోజులు వస్తుంది?"
+          >
+            🌾 బియ్యం
+          </button>
+
+          <button type="button" data-q="రమేష్ ఎంత బాకీ ఉన్నాడు?">
+            👤 రమేష్ బాకీ
+          </button>
+
+          <button
+            type="button"
+            data-q="ఎవరి బాకీ ఎక్కువ రోజులుగా ఉంది?"
+          >
+            ⏰ పాత బాకీలు
+          </button>
+        </div>
+
+        <input
+          id="billfile"
+          type="file"
+          accept="image/*"
+          capture="environment"
+          hidden
+        >
+
+        <p id="orders-status" role="status" hidden></p>
+
+        <div id="orders"></div>
+        <div id="billbox"></div>
+
+        <div
+          id="log"
+          role="log"
+          aria-label="సంభాషణ"
+          aria-live="polite"
+          aria-relevant="additions text"
+        ></div>
+
+        <form id="row">
+          <label for="msg" class="sr-only">మీ ప్రశ్న</label>
+
+          <input
+            id="msg"
+            type="text"
+            placeholder="తెలుగు లేదా Englishలో అడగండి..."
+            autocomplete="off"
+          >
+
+          <button
+            id="mic"
+            type="button"
+            title="మాట్లాడండి"
+            aria-label="తెలుగులో మాట్లాడండి"
+          >
+            🎤
+          </button>
+
+          <button id="send" type="submit">పంపు</button>
+        </form>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    "use strict";
+
+    const $ = id => document.getElementById(id);
+
+    const log = $("log");
+    const msg = $("msg");
+
+    const sid = "s" + (
+      window.crypto && typeof window.crypto.randomUUID === "function"
+        ? window.crypto.randomUUID()
+        : Math.random().toString(36).slice(2) + Date.now()
+    );
+
+    const hasSpeech = "speechSynthesis" in window;
+
+    let speak = hasSpeech;
+    let DASH = null;
+    let DAYS = 7;
+    let loadedDays = null;
+    let BILL = [];
+
+    let chatBusy = false;
+    let actionBusy = false;
+    let scanBusy = false;
+    let dashboardRequest = 0;
+    let ordersRequest = 0;
+    let billVersion = 0;
+
+    const moneyFormatter = new Intl.NumberFormat("en-IN", {
+      style: "currency",
+      currency: "INR",
+      maximumFractionDigits: 2
+    });
+
+    function number(value) {
+      const parsed = Number(value);
+      return Number.isFinite(parsed) ? parsed : 0;
+    }
+
+    function money(value) {
+      return moneyFormatter.format(number(value));
+    }
+
+    function list(value) {
+      return Array.isArray(value) ? value : [];
+    }
+
+    function node(tag, className = "", text) {
+      const element = document.createElement(tag);
+
+      if (className) element.className = className;
+      if (text !== undefined) element.textContent = String(text);
+
+      return element;
+    }
+
+    function makeButton(text, className, handler) {
+      const button = node("button", className, text);
+      button.type = "button";
+      button.addEventListener("click", handler);
+      return button;
+    }
+
+    function add(cls, text) {
+      const bubble = node("div", "bubble " + cls, text);
+      log.appendChild(bubble);
+      log.scrollTop = log.scrollHeight;
+      return bubble;
+    }
+
+    function addItem(parent, left, right, rightClass = "") {
+      const row = node("div", "item");
+      const label = node("span", "", left);
+      const value = node("span", rightClass, right);
+
+      row.append(label, value);
+      parent.appendChild(row);
+      return row;
+    }
+
+    function addBar(parent, percentage, color = "#1b8a4b") {
+      const bar = node("div", "bar");
+      const fill = node("i");
+
+      fill.style.width =
+        Math.max(0, Math.min(100, number(percentage))) + "%";
+
+      fill.style.background = color;
+      bar.appendChild(fill);
+      parent.appendChild(bar);
+    }
+
+    function waLink(phone, text) {
+      const digits = String(phone || "").replace(/\D/g, "");
+      const normalized =
+        digits.length === 10 ? "91" + digits : digits;
+
+      return "https://wa.me/" + normalized +
+        "?text=" + encodeURIComponent(text);
+    }
+
+    function supplierLink(parent, phone, text, label) {
+      const link = node("a", "wa-btn big", label);
+      link.href = waLink(phone, text);
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+      parent.appendChild(link);
+    }
+
+    function csrfToken() {
+      const input = document.querySelector(
+        "[name=csrfmiddlewaretoken]"
+      );
+
+      if (input && input.value) return input.value;
+
+      const cookie = document.cookie.split("; ").find(
+        entry => entry.startsWith("csrftoken=")
+      );
+
+      return cookie
+        ? decodeURIComponent(cookie.slice("csrftoken=".length))
+        : "";
+    }
+
+    async function api(url, options = {}) {
+      const {
+        method = "GET",
+        data,
+        formData
+      } = options;
+
+      const headers = {
+        "Accept": "application/json"
+      };
+
+      const request = {
+        method,
+        headers,
+        credentials: "same-origin",
+        cache: "no-store"
+      };
+
+      if (method !== "GET") {
+        const token = csrfToken();
+
+        if (token) headers["X-CSRFToken"] = token;
+
+        if (formData) {
+          request.body = formData;
+        } else if (data !== undefined) {
+          headers["Content-Type"] = "application/json";
+          request.body = JSON.stringify(data);
+        }
+      }
+
+      const response = await fetch(url, request);
+
+      let result;
+
+      try {
+        result = await response.json();
+      } catch {
+        throw new Error(
+          "Server నుంచి JSON response రాలేదు. Status: " +
+          response.status
+        );
+      }
+
+      if (!response.ok) {
+        throw new Error(
+          result.message ||
+          result.error ||
+          "Request failed. Status: " + response.status
+        );
+      }
+
+      if (!result || typeof result !== "object") {
+        throw new Error("Server response సరిగా లేదు.");
+      }
+
+      return result;
+    }
+
+    function syncBusyUI() {
+      const busy = chatBusy || actionBusy || scanBusy;
+
+      $("send").disabled = busy;
+      $("mic").disabled = busy;
+      msg.disabled = busy;
+
+      document.querySelectorAll(".quick button").forEach(button => {
+        button.disabled = busy;
       });
-      const fbtns = Object.entries(fg).map(([name, g]) => {
-        const lines = g.items.map(i => `• ${i.product}: ${i.suggested_qty} ${i.unit}`).join("\n");
-        const text = `నమస్తే ${name} 🙏\n${f.name} కోసం ఈ సరుకు పంపగలరు:\n${lines}\nధన్యవాదాలు - DukanMitra`;
-        return `<a class="wa-btn big" href="${waLink(g.phone, text)}" target="_blank">🎉 ${name} కి పండుగ ఆర్డర్</a>`;
-      }).join("");
-      $("festival").innerHTML =
-        `<div class="fest-head"><b>${f.name}</b> కి ${f.days_left} రోజులు (${f.date})<br>
-         <small>అమ్మకాలు సుమారు ${f.boost_percent}% పెరగవచ్చు • అంచనా మాత్రమే</small></div>` +
-        (frows || "అవసరమైనంత స్టాక్ ఉంది ✅") + fbtns;
-    } else {
-      $("festival").innerHTML = "రాబోయే 30 రోజుల్లో పండుగ లేదు";
-    }
 
-    if (d.low_stock.length) {
-      const rows = d.low_stock.map(i => {
-        const crit = i.stock < i.limit / 2;
-        const pct = Math.min(100, Math.round(i.stock / i.limit * 100));
-        const color = pct < 40 ? "#d32f2f" : pct < 70 ? "#f57c00" : "#2e7d32";
-        return `<div class="item"><span>${i.product}</span>
-          <span class="low">${i.stock} ${i.unit}<span class="tag ${crit ? 't-crit' : 't-low'}">${crit ? 'చాలా తక్కువ' : 'తక్కువ'}</span></span></div>
-          <div class="bar"><i style="width:${pct}%;background:${color}"></i></div>
-          <div class="sub">${pct}% మిగిలింది • కనీసం ${i.limit} • ${i.supplier || ""}</div>`;
-      }).join("");
-
-      const groups = {};
-      d.low_stock.forEach(i => {
-        if (!i.supplier) return;
-        (groups[i.supplier] ||= { phone: i.supplier_phone, items: [] }).items.push(i);
+      document.querySelectorAll(
+        "#credit button, #orders button, #billbox button, #billbox input"
+      ).forEach(control => {
+        control.disabled = busy;
       });
-      const btns = Object.entries(groups).map(([name, g]) => {
-        const lines = g.items.map(i =>
-          `• ${i.product}: ${Math.max(1, Math.ceil(i.limit * 2 - i.stock))} ${i.unit}`).join("\n");
-        const text = `నమస్తే ${name} 🙏\nదయచేసి ఈ సరుకు పంపగలరు:\n${lines}\nధన్యవాదాలు - DukanMitra`;
-        return `<a class="wa-btn big" href="${waLink(g.phone, text)}" target="_blank">📦 ${name} కి WhatsApp ఆర్డర్</a>`;
-      }).join("");
-      $("low").innerHTML = rows + btns;
-    } else {
-      $("low").innerHTML = "అన్నీ సరిపడా ఉన్నాయి ✅";
+
+      $("log").setAttribute("aria-busy", String(chatBusy));
     }
 
-    const oldDue = d.credit.filter(c => c.days !== null && c.days >= 30);
-    const oldTotal = oldDue.reduce((s, c) => s + c.balance_due, 0);
-    const warn = oldDue.length
-      ? `<div class="overdue">⚠️ 30+ రోజుల బాకీ: <b>₹${oldTotal}</b> (${oldDue.length} కస్టమర్లు)</div>` : "";
+    function beginAction() {
+      if (chatBusy || actionBusy || scanBusy) return false;
 
-$("credit").replaceChildren();
-
-if (oldDue.length) {
-  const warning = document.createElement("div");
-  warning.className = "overdue";
-  warning.textContent =
-    `⚠️ 30+ రోజుల బాకీ: ₹${oldTotal} ` +
-    `(${oldDue.length} కస్టమర్లు)`;
-
-  $("credit").appendChild(warning);
-}
-
-if (!d.credit.length) {
-  const empty = document.createElement("p");
-  empty.textContent = "బాకీలు లేవు ✅";
-  $("credit").appendChild(empty);
-}
-
-d.credit.forEach(c => {
-  const row = document.createElement("div");
-  row.className = "crow";
-
-  const top = document.createElement("div");
-  top.className = "top";
-
-  const customer = document.createElement("span");
-  customer.textContent = c.name;
-
-  const days = c.days;
-
-  if (Number.isFinite(days)) {
-    const badge = document.createElement("span");
-
-    const ageClass =
-      days >= 30 ? "age-red" :
-      days >= 15 ? "age-orange" :
-      "age-green";
-
-    badge.className = "age " + ageClass;
-    badge.style.marginLeft = "6px";
-    badge.textContent = `${days} రోజులు`;
-
-    customer.appendChild(badge);
-  }
-
-  const amount = document.createElement("b");
-  amount.textContent = `₹${c.balance_due}`;
-
-  top.append(customer, amount);
-
-  const buttons = document.createElement("div");
-  buttons.className = "btns";
-
-  const reminder = document.createElement("button");
-  reminder.type = "button";
-  reminder.style.background = "#25d366";
-  reminder.textContent = "📲 రిమైండర్";
-
-  reminder.onclick = () => {
-    const phone = String(c.phone || "").trim();
-
-    if (!phone.replace(/\D/g, "")) {
-      alert("ఈ కస్టమర్ ఫోన్ నంబర్ అందుబాటులో లేదు.");
-      return;
+      actionBusy = true;
+      syncBusyUI();
+      return true;
     }
 
-    const pending =
-      Number.isFinite(days) && days > 0
+    async function refreshBusinessData() {
+      await Promise.allSettled([
+        loadDash(),
+        loadOrders()
+      ]);
+    }
+
+    function renderChart(rows) {
+      const container = $("chart");
+      container.replaceChildren();
+
+      if (!rows.length) {
+        container.appendChild(node("p", "sub", "డేటా లేదు"));
+        return;
+      }
+
+      const max = Math.max(
+        1,
+        ...rows.map(item => number(item.total))
+      );
+
+      rows.forEach((item, index) => {
+        const column = node(
+          "div",
+          "chart-column" +
+            (index === rows.length - 1 ? " latest" : "")
+        );
+
+        const amount = node("small", "", money(item.total));
+        const bar = node("i");
+
+        bar.style.height =
+          Math.max(3, Math.round(number(item.total) / max * 120)) +
+          "px";
+
+        column.append(
+          amount,
+          bar,
+          node("span", "", item.day || "")
+        );
+
+        container.appendChild(column);
+      });
+    }
+
+    function renderBest(rows) {
+      const container = $("best");
+      container.replaceChildren();
+
+      if (!rows.length) {
+        container.textContent = "డేటా లేదు";
+        return;
+      }
+
+      const max = Math.max(
+        1,
+        ...rows.map(item => number(item.amt))
+      );
+
+      rows.forEach(item => {
+        addItem(
+          container,
+          `${item.name} (${item.qty} ${item.unit || ""})`,
+          money(item.amt)
+        );
+
+        addBar(container, number(item.amt) / max * 100);
+      });
+    }
+
+    function renderFestival(festival) {
+      const container = $("festival");
+      container.replaceChildren();
+
+      if (!festival || !festival.found) {
+        container.textContent =
+          "రాబోయే 30 రోజుల్లో పండుగ లేదు";
+        return;
+      }
+
+      const heading = node("div", "fest-head");
+
+      heading.append(
+        node(
+          "div",
+          "",
+          `${festival.name} కి ${festival.days_left} రోజులు ` +
+          `(${festival.date})`
+        ),
+        node(
+          "small",
+          "",
+          `అమ్మకాలు సుమారు ${festival.boost_percent}% ` +
+          "పెరగవచ్చు • అంచనా మాత్రమే"
+        )
+      );
+
+      container.appendChild(heading);
+
+      const items = list(festival.items);
+      const suppliers = new Map();
+
+      if (!items.length) {
+        container.appendChild(
+          node("p", "sub", "అవసరమైనంత స్టాక్ ఉంది ✅")
+        );
+      }
+
+      items.forEach(item => {
+        addItem(
+          container,
+          item.product,
+          `కొనండి: ${item.suggested_qty} ${item.unit || ""} ` +
+          `(ఉన్నది ${item.stock})`
+        );
+
+        if (!item.supplier) return;
+
+        if (!suppliers.has(item.supplier)) {
+          suppliers.set(item.supplier, {
+            phone: item.supplier_phone,
+            items: []
+          });
+        }
+
+        suppliers.get(item.supplier).items.push(item);
+      });
+
+      suppliers.forEach((group, name) => {
+        const lines = group.items.map(item =>
+          `• ${item.product}: ${item.suggested_qty} ${item.unit || ""}`
+        ).join("\n");
+
+        const text =
+          `నమస్తే ${name} 🙏\n` +
+          `${festival.name} కోసం ఈ సరుకు పంపగలరు:\n` +
+          lines +
+          "\nధన్యవాదాలు - DukanMitra";
+
+        supplierLink(
+          container,
+          group.phone,
+          text,
+          `🎉 ${name} కి పండుగ ఆర్డర్`
+        );
+      });
+    }
+
+    function renderLowStock(items) {
+      const container = $("low");
+      container.replaceChildren();
+
+      if (!items.length) {
+        container.textContent = "అన్నీ సరిపడా ఉన్నాయి ✅";
+        return;
+      }
+
+      const suppliers = new Map();
+
+      items.forEach(item => {
+        const stock = number(item.stock);
+        const limit = number(item.limit);
+
+        const percentage = limit > 0
+          ? Math.max(0, Math.min(100, Math.round(stock / limit * 100)))
+          : 0;
+
+        const critical = limit > 0
+          ? stock < limit / 2
+          : stock <= 0;
+
+        const row = node("div", "item");
+        const quantity = node(
+          "span",
+          "low",
+          `${item.stock} ${item.unit || ""}`
+        );
+
+        quantity.appendChild(
+          node(
+            "span",
+            "tag " + (critical ? "t-crit" : "t-low"),
+            critical ? "చాలా తక్కువ" : "తక్కువ"
+          )
+        );
+
+        row.append(
+          node("span", "", item.product),
+          quantity
+        );
+
+        container.appendChild(row);
+
+        const color = percentage < 40
+          ? "#d32f2f"
+          : percentage < 70
+            ? "#a84b00"
+            : "#2e7d32";
+
+        addBar(container, percentage, color);
+
+        container.appendChild(
+          node(
+            "div",
+            "sub",
+            `కనీస నిల్వతో పోలిస్తే ${percentage}% • ` +
+            `కనీసం ${item.limit} • ${item.supplier || ""}`
+          )
+        );
+
+        if (!item.supplier) return;
+
+        if (!suppliers.has(item.supplier)) {
+          suppliers.set(item.supplier, {
+            phone: item.supplier_phone,
+            items: []
+          });
+        }
+
+        suppliers.get(item.supplier).items.push(item);
+      });
+
+      container.appendChild(
+        node(
+          "p",
+          "sub",
+          "క్రింది WhatsApp ఆర్డర్ పరిమాణాలు సాధారణ అంచనాలు. " +
+          "పంపే ముందు సరిచూడండి."
+        )
+      );
+
+      suppliers.forEach((group, name) => {
+        const lines = group.items.map(item => {
+          const quantity = Math.max(
+            1,
+            Math.ceil(number(item.limit) * 2 - number(item.stock))
+          );
+
+          return `• ${item.product}: ${quantity} ${item.unit || ""}`;
+        }).join("\n");
+
+        const text =
+          `నమస్తే ${name} 🙏\n` +
+          "దయచేసి ఈ సరుకు పంపగలరు:\n" +
+          lines +
+          "\nధన్యవాదాలు - DukanMitra";
+
+        supplierLink(
+          container,
+          group.phone,
+          text,
+          `📦 ${name} కి WhatsApp ఆర్డర్`
+        );
+      });
+    }
+
+    function creditDays(customer) {
+      if (
+        customer.days === null ||
+        customer.days === undefined ||
+        customer.days === ""
+      ) {
+        return null;
+      }
+
+      const days = Number(customer.days);
+      return Number.isFinite(days) ? days : null;
+    }
+
+    function renderCredit(customers) {
+      const container = $("credit");
+      container.replaceChildren();
+
+      const overdue = customers.filter(customer => {
+        const days = creditDays(customer);
+        return days !== null && days >= 30;
+      });
+
+      if (overdue.length) {
+        const total = overdue.reduce(
+          (sum, customer) => sum + number(customer.balance_due),
+          0
+        );
+
+        container.appendChild(
+          node(
+            "div",
+            "overdue",
+            `⚠️ 30+ రోజుల బాకీ: ${money(total)} ` +
+            `(${overdue.length} కస్టమర్లు)`
+          )
+        );
+      }
+
+      if (!customers.length) {
+        container.textContent = "బాకీలు లేవు ✅";
+        return;
+      }
+
+      customers.forEach(customer => {
+        const row = node("div", "crow");
+        const top = node("div", "top");
+        const name = node("span", "", customer.name);
+        const days = creditDays(customer);
+
+        if (days !== null) {
+          const ageClass = days >= 30
+            ? "age-red"
+            : days >= 15
+              ? "age-orange"
+              : "age-green";
+
+          name.appendChild(
+            node("span", "age " + ageClass, `${days} రోజులు`)
+          );
+        }
+
+        top.append(
+          name,
+          node("b", "", money(customer.balance_due))
+        );
+
+        const buttons = node("div", "btns");
+
+        const reminder = makeButton(
+          "📲 రిమైండర్",
+          "ok",
+          () => remind(customer)
+        );
+
+        const payment = makeButton(
+          "💰 చెల్లించారు",
+          "ok",
+          () => pay(customer.name, customer.balance_due)
+        );
+
+        buttons.append(reminder, payment);
+        row.append(top, buttons);
+        container.appendChild(row);
+      });
+    }
+
+    function renderProfit(profit) {
+      const container = $("profit");
+      container.replaceChildren();
+
+      if (!profit || typeof profit !== "object") {
+        container.textContent = "లాభం వివరాలు అందుబాటులో లేవు.";
+        return;
+      }
+
+      container.appendChild(
+        node(
+          "p",
+          "sub",
+          loadedDays === 1
+            ? "కాలం: ఈ రోజు"
+            : `కాలం: గత ${loadedDays} రోజులు`
+        )
+      );
+
+      addItem(container, "ఆదాయం", money(profit.revenue));
+      addItem(container, "వస్తువుల ఖర్చు", money(profit.cost_of_goods));
+      addItem(container, "ఇతర ఖర్చులు", money(profit.expenses));
+
+      const row = node("div", "item");
+      const value = node("b", "", money(profit.net_profit));
+
+      value.style.color = number(profit.net_profit) >= 0
+        ? "#1b8a4b"
+        : "#c62828";
+
+      row.append(
+        node("b", "", "నికర లాభం"),
+        value
+      );
+
+      container.appendChild(row);
+
+      if (profit.warning) {
+        container.appendChild(
+          node("div", "sub", "⚠️ " + profit.warning)
+        );
+      }
+    }
+
+    function renderExpiry(items) {
+      const container = $("expiry");
+      container.replaceChildren();
+
+      if (!items.length) {
+        container.textContent = "గడువు సమస్యలు లేవు ✅";
+        return;
+      }
+
+      items.forEach(item => {
+        const days = number(item.days_left);
+
+        const label = days < 0
+          ? `${Math.abs(days)} రోజుల క్రితం ముగిసింది`
+          : days === 0
+            ? "ఈ రోజే గడువు"
+            : `${days} రోజులు`;
+
+        addItem(
+          container,
+          item.product,
+          label,
+          days <= 3 ? "low" : ""
+        );
+      });
+    }
+
+    async function loadDash() {
+      const requestId = ++dashboardRequest;
+      const requestedDays = DAYS;
+
+      try {
+        const data = await api(
+          "/api/dashboard?days=" + requestedDays
+        );
+
+        if (requestId !== dashboardRequest) return false;
+
+        if (
+          data.success === false ||
+          !data.sales ||
+          !Array.isArray(data.credit) ||
+          !Array.isArray(data.low_stock)
+        ) {
+          throw new Error(
+            data.message || "Dashboard data సరిగా లేదు."
+          );
+        }
+
+        loadedDays = requestedDays;
+
+        $("k1").textContent = money(data.sales.total_amount);
+        $("k1s").textContent =
+          `${number(data.sales.number_of_sales)} అమ్మకాలు`;
+
+        $("k2").textContent = money(data.week_total);
+        $("k2s").textContent = loadedDays === 1
+          ? "ఈ రోజు"
+          : `గత ${loadedDays} రోజులు`;
+
+        $("k3").textContent = data.low_stock.length;
+        $("k4").textContent = money(data.credit_total);
+        $("k4s").textContent =
+          `${data.credit.length} కస్టమర్లు`;
+
+        renderChart(list(data.week));
+        renderBest(list(data.best));
+        renderFestival(data.festival);
+        renderLowStock(data.low_stock);
+        renderCredit(data.credit);
+        renderProfit(data.profit);
+        renderExpiry(list(data.expiry));
+
+        const outOfStock = list(data.out_of_stock);
+
+        $("oos").hidden = outOfStock.length === 0;
+        $("oos").textContent = outOfStock.length
+          ? "🚨 స్టాక్ అయిపోయింది: " + outOfStock.join(", ")
+          : "";
+
+        DASH = data;
+        $("dashboard-error").hidden = true;
+        syncBusyUI();
+
+        return true;
+
+      } catch (error) {
+        if (requestId !== dashboardRequest) return false;
+
+        console.error("Dashboard error:", error);
+
+        $("dashboard-error-text").textContent =
+          "Dashboard refresh కాలేదు. కనిపిస్తున్న వివరాలు పాతవి " +
+          "కావచ్చు. " + error.message;
+
+        $("dashboard-error").hidden = false;
+        return false;
+      }
+    }
+
+    async function loadOrders() {
+      const requestId = ++ordersRequest;
+
+      try {
+        const data = await api("/api/orders");
+
+        if (requestId !== ordersRequest) return false;
+
+        if (
+          data.success === false ||
+          !Array.isArray(data.orders)
+        ) {
+          throw new Error(
+            data.message || "Orders response సరిగా లేదు."
+          );
+        }
+
+        const container = $("orders");
+        container.replaceChildren();
+
+        data.orders.forEach(order => {
+          const card = node("div", "order");
+
+          card.appendChild(
+            node(
+              "b",
+              "",
+              `📦 Order #${order.id}: ${order.supplier}`
+            )
+          );
+
+          const items = node("ul");
+
+          list(order.items).forEach(item => {
+            items.appendChild(
+              node(
+                "li",
+                "",
+                `${item.product}: ${item.quantity} ${item.unit || ""}`
+              )
+            );
+          });
+
+          const buttons = node("div", "btns");
+
+          buttons.append(
+            makeButton(
+              "✅ ఆమోదించు",
+              "ok",
+              () => act(order.id, "approve")
+            ),
+            makeButton(
+              "❌ రద్దు",
+              "no",
+              () => act(order.id, "cancel")
+            )
+          );
+
+          card.append(items, buttons);
+          container.appendChild(card);
+        });
+
+        $("orders-status").hidden = true;
+        syncBusyUI();
+        return true;
+
+      } catch (error) {
+        if (requestId !== ordersRequest) return false;
+
+        console.error("Orders error:", error);
+
+        $("orders-status").textContent =
+          "ఆర్డర్ వివరాలు refresh కాలేదు. " +
+          "మార్పు చేసే ముందు మళ్లీ తనిఖీ చేయండి.";
+
+        $("orders-status").hidden = false;
+        return false;
+      }
+    }
+
+    async function act(id, action) {
+      if (!["approve", "cancel"].includes(action)) return;
+      if (chatBusy || actionBusy || scanBusy) return;
+
+      const question = action === "approve"
+        ? `Order #${id} ని ఆమోదించాలా?`
+        : `Order #${id} ని రద్దు చేయాలా?`;
+
+      if (!confirm(question)) return;
+      if (!beginAction()) return;
+
+      try {
+        const result = await api("/api/order-action", {
+          method: "POST",
+          data: {id, action}
+        });
+
+        if (result.success !== true) {
+          add(
+            "bot",
+            "❌ " +
+            (result.message || "Order action నిర్ధారణ రాలేదు.") +
+            "\nమళ్లీ ప్రయత్నించే ముందు order status చూడండి."
+          );
+          return;
+        }
+
+        if (action === "cancel") {
+          add("bot", `✅ Order #${id} రద్దు చేయబడింది.`);
+          return;
+        }
+
+        add(
+          "bot",
+          `✅ Order #${id} ఆమోదించబడింది.\n` +
+          (result.message_to_send || "")
+        );
+
+        if (result.message_to_send) {
+          const bubble = node("div", "bubble bot");
+
+          supplierLink(
+            bubble,
+            result.supplier_phone,
+            result.message_to_send,
+            `📲 ${result.supplier || "Supplier"} కి WhatsApp లో పంపు`
+          );
+
+          log.appendChild(bubble);
+          log.scrollTop = log.scrollHeight;
+        }
+
+      } catch (error) {
+        console.error("Order action error:", error);
+
+        add(
+          "bot",
+          "❌ Order action నిర్ధారణ పొందలేకపోయాను. " +
+          "మళ్లీ ప్రయత్నించే ముందు తాజా order status చూడండి."
+        );
+
+      } finally {
+        await refreshBusinessData();
+        actionBusy = false;
+        syncBusyUI();
+      }
+    }
+
+    function remind(customer) {
+      const phone = String(
+        customer.phone || customer.phone_number || ""
+      ).trim();
+
+      if (!phone.replace(/\D/g, "")) {
+        alert("ఈ కస్టమర్ ఫోన్ నంబర్ అందుబాటులో లేదు.");
+        return;
+      }
+
+      const days = creditDays(customer);
+
+      const pending = days !== null && days > 0
         ? `\nఇది ${days} రోజులుగా పెండింగ్‌లో ఉంది.`
         : "";
 
-    const text =
-      `నమస్తే ${c.name} గారు 🙏\n` +
-      `మీ బాకీ ₹${c.balance_due} ఉంది.` +
-      pending +
-      "\nవీలైనప్పుడు చెల్లించగలరు.\n" +
-      "ధన్యవాదాలు - DukanMitra";
+      const text =
+        `నమస్తే ${customer.name} గారు 🙏\n` +
+        `మీ బాకీ ${money(customer.balance_due)} ఉంది.` +
+        pending +
+        "\nవీలైనప్పుడు చెల్లించగలరు.\n" +
+        "ధన్యవాదాలు - DukanMitra";
 
-    window.open(
-      waLink(phone, text),
-      "_blank",
-      "noopener,noreferrer"
-    );
-  };
+      window.open(
+        waLink(phone, text),
+        "_blank",
+        "noopener,noreferrer"
+      );
+    }
 
-  const payment = document.createElement("button");
-  payment.type = "button";
-  payment.style.background = "#1b8a4b";
-  payment.textContent = "💰 చెల్లించారు";
-  payment.onclick = () => pay(c.name, c.balance_due);
+    async function pay(name, due) {
+      if (chatBusy || actionBusy || scanBusy) return;
 
-  buttons.append(reminder, payment);
-  row.append(top, buttons);
+      const balance = Number(due);
 
-  $("credit").appendChild(row);
-});
+      if (!Number.isFinite(balance) || balance <= 0) {
+        add("bot", "❌ బాకీ వివరాలు సరిగా లేవు.");
+        return;
+      }
 
-    const p = d.profit;
-    $("profit").innerHTML = `
-      <div class="item"><span>ఆదాయం</span><span>₹${p.revenue}</span></div>
-      <div class="item"><span>వస్తువుల ఖర్చు</span><span>₹${p.cost_of_goods}</span></div>
-      <div class="item"><span>ఇతర ఖర్చులు</span><span>₹${p.expenses}</span></div>
-      <div class="item"><b>నికర లాభం</b><b style="color:${p.net_profit >= 0 ? '#1b8a4b' : '#c62828'}">₹${p.net_profit}</b></div>
-      ${p.warning ? `<div class="sub">⚠️ ${p.warning}</div>` : ""}`;
+      const input = prompt(
+        `${name} ఎంత చెల్లించారు? (గరిష్టం ${money(balance)})`,
+        String(balance)
+      );
 
-    $("expiry").innerHTML = d.expiry.length ? d.expiry.map(e =>
-      `<div class="item"><span>${e.product}</span>
-       <span class="${e.days_left <= 3 ? 'low' : ''}">${e.days_left} రోజులు</span></div>`).join("")
-      : "గడువు సమస్యలు లేవు ✅";
+      if (input === null || input.trim() === "") return;
 
-    const o = $("oos");
-    if (d.out_of_stock.length) { o.style.display = "block"; o.textContent = "🚨 స్టాక్ అయిపోయింది: " + d.out_of_stock.join(", "); }
-    else o.style.display = "none";
-  } catch (e) { console.error("loadDash లోపం:", e); }
-}
+      const amount = Number(input);
 
-async function loadOrders() {
-  try {
-    const d = await (await fetch("/api/orders")).json();
-    $("orders").innerHTML = d.orders.map(o => `
-      <div class="order"><b>📦 Order #${o.id}: ${o.supplier}</b>
-        <ul>${o.items.map(i => `<li>${i.product}: ${i.quantity} ${i.unit}</li>`).join("")}</ul>
-        <button class="ok" onclick="act(${o.id},'approve')">✅ ఆమోదించు</button>
-        <button class="no" onclick="act(${o.id},'cancel')">❌ రద్దు</button>
-      </div>`).join("");
-  } catch (e) { console.error("loadOrders లోపం:", e); }
-}
+      if (
+        !Number.isFinite(amount) ||
+        amount <= 0 ||
+        amount > balance
+      ) {
+        alert(
+          `₹0 కంటే ఎక్కువ, ${money(balance)} వరకు నమోదు చేయండి.`
+        );
+        return;
+      }
 
-const pendingOrderActions = new Set();
+      const approved = confirm(
+        "చెల్లింపు వివరాలు సరిచూడండి:\n\n" +
+        `కస్టమర్: ${name}\n` +
+        `ప్రస్తుత బాకీ: ${money(balance)}\n` +
+        `చెల్లింపు: ${money(amount)}\n` +
+        `అంచనా మిగిలిన బాకీ: ${money(balance - amount)}\n\n` +
+        "నమోదు చేయాలా?"
+      );
 
-async function act(id, action) {
-  if (!["approve", "cancel"].includes(action)) return;
-  if (pendingOrderActions.has(id)) return;
+      if (!approved || !beginAction()) return;
 
-  const question = action === "approve"
-    ? `Order #${id} ని supplier కి ఆమోదించాలా?`
-    : `Order #${id} ని రద్దు చేయాలా?`;
+      try {
+        const result = await api("/api/payment", {
+          method: "POST",
+          data: {name, amount}
+        });
 
-  if (!confirm(question)) return;
+        if (result.success !== true) {
+          add(
+            "bot",
+            "❌ " + (result.message || "చెల్లింపు నమోదు కాలేదు.")
+          );
+          return;
+        }
 
-  pendingOrderActions.add(id);
+        add(
+          "bot",
+          `✅ ${result.customer} ${money(result.paid)} చెల్లించారు.\n` +
+          `మిగిలిన బాకీ: ${money(result.balance_left)}`
+        );
 
-  try {
-    const response = await fetch("/api/order-action", {
-      method: "POST",
-      headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({id, action})
-    });
+      } catch (error) {
+        console.error("Payment error:", error);
 
-    const result = await response.json();
+        add(
+          "bot",
+          "❌ చెల్లింపు నిర్ధారణ పొందలేకపోయాను. " +
+          "మళ్లీ నమోదు చేసే ముందు తాజా బాకీ వివరాలు చూడండి."
+        );
 
-    if (!response.ok || result.success !== true) {
+      } finally {
+        await loadDash();
+        actionBusy = false;
+        syncBusyUI();
+      }
+    }
+
+    function clearBill() {
+      BILL = [];
+      billVersion++;
+      $("billbox").replaceChildren();
+    }
+
+    function showBill(items) {
+      BILL = list(items);
+      billVersion++;
+
+      const container = $("billbox");
+      container.replaceChildren();
+
+      if (!BILL.length) {
+        add("bot", "బిల్‌లో సరుకుల వివరాలు గుర్తించలేకపోయాను.");
+        return;
+      }
+
+      const card = node("div", "order");
+
+      card.append(
+        node("b", "", "🧾 బిల్ నుండి చదివినవి"),
+        node(
+          "p",
+          "sub",
+          "వస్తువులు, పరిమాణాలు, యూనిట్లు సరిచూడండి. " +
+          "జాబితాలో లేని వస్తువులు చేర్చబడవు."
+        )
+      );
+
+      BILL.forEach((item, index) => {
+        const row = node("div", "billrow");
+
+        if (!item.product_id) {
+          row.classList.add("low");
+
+          row.append(
+            node("span", "", item.name || item.product || "వస్తువు"),
+            node("span", "", "జాబితాలో లేదు")
+          );
+
+          card.appendChild(row);
+          return;
+        }
+
+        const label = node(
+          "label",
+          "",
+          item.product || item.name || "వస్తువు"
+        );
+
+        label.htmlFor = "bq" + index;
+
+        const quantity = node("span", "bill-quantity");
+        const input = document.createElement("input");
+
+        input.id = "bq" + index;
+        input.type = "number";
+        input.step = "any";
+        input.min = "0";
+        input.inputMode = "decimal";
+        input.value = item.quantity ?? "";
+
+        quantity.append(
+          input,
+          node("span", "", item.unit || "")
+        );
+
+        row.append(label, quantity);
+        card.appendChild(row);
+      });
+
+      const buttons = node("div", "btns");
+
+      buttons.append(
+        makeButton("✅ స్టాక్‌లో చేర్చు", "ok", applyBill),
+        makeButton("❌ రద్దు", "no", clearBill)
+      );
+
+      card.appendChild(buttons);
+      container.appendChild(card);
+      syncBusyUI();
+    }
+
+    async function scanBill(event) {
+      const file = event.target.files[0];
+      event.target.value = "";
+
+      if (!file) return;
+      if (chatBusy || actionBusy || scanBusy) return;
+
+      if (BILL.length && !confirm(
+        "ప్రస్తుత bill reviewని తీసేసి కొత్త బిల్ చదవాలా?"
+      )) {
+        return;
+      }
+
+      clearBill();
+      scanBusy = true;
+      syncBusyUI();
+
+      const bubble = add("bot", "📸 బిల్ చదువుతున్నాను...");
+      const formData = new FormData();
+      formData.append("image", file);
+
+      try {
+        const result = await api("/api/scan-bill", {
+          method: "POST",
+          formData
+        });
+
+        if (result.success !== true) {
+          bubble.textContent =
+            "❌ " + (result.message || "బిల్ చదవలేకపోయాను.");
+          return;
+        }
+
+        bubble.textContent =
+          "🧾 బిల్ చదివాను. పైన వివరాలు సరిచూసి ఆమోదించండి.";
+
+        showBill(result.items);
+
+      } catch (error) {
+        console.error("Bill scan error:", error);
+
+        bubble.textContent =
+          "❌ బిల్ చదవడంలో లోపం. మళ్లీ ప్రయత్నించండి.";
+
+      } finally {
+        scanBusy = false;
+        syncBusyUI();
+      }
+    }
+
+    async function applyBill() {
+      if (chatBusy || actionBusy || scanBusy) return;
+
+      const rows = [];
+      const summary = [];
+
+      for (let index = 0; index < BILL.length; index++) {
+        const item = BILL[index];
+
+        if (!item.product_id) continue;
+
+        const input = $("bq" + index);
+
+        if (!input || input.value.trim() === "") {
+          alert("ప్రతి వస్తువుకు సరైన పరిమాణం నమోదు చేయండి.");
+          return;
+        }
+
+        const quantity = Number(input.value);
+
+        if (!Number.isFinite(quantity) || quantity < 0) {
+          alert("పరిమాణం 0 లేదా అంతకంటే ఎక్కువగా ఉండాలి.");
+          return;
+        }
+
+        if (quantity === 0) continue;
+
+        rows.push({
+          product_id: item.product_id,
+          quantity
+        });
+
+        summary.push(
+          `${item.product || item.name}: ${quantity} ${item.unit || ""}`
+        );
+      }
+
+      if (!rows.length) {
+        alert("చేర్చడానికి కనీసం ఒక సరైన పరిమాణం అవసరం.");
+        return;
+      }
+
+      if (!confirm(
+        "ఈ సరుకును స్టాక్‌లో చేర్చాలా?\n\n" +
+        summary.join("\n")
+      )) {
+        return;
+      }
+
+      if (!beginAction()) return;
+
+      const submittedVersion = billVersion;
+
+      try {
+        const result = await api("/api/apply-bill", {
+          method: "POST",
+          data: {rows}
+        });
+
+        if (result.success !== true) {
+          add(
+            "bot",
+            "❌ " + (result.message || "స్టాక్ update కాలేదు.")
+          );
+          return;
+        }
+
+        add(
+          "bot",
+          "✅ స్టాక్ నవీకరించబడింది:\n" +
+          list(result.updated).map(item =>
+            `${item.product}: ${item.stock} ${item.unit || ""}`
+          ).join("\n")
+        );
+
+        if (submittedVersion === billVersion) clearBill();
+
+      } catch (error) {
+        console.error("Apply bill error:", error);
+
+        add(
+          "bot",
+          "❌ స్టాక్ update నిర్ధారణ పొందలేకపోయాను. " +
+          "అదే బిల్‌ని మళ్లీ చేర్చే ముందు తాజా stock/history చూడండి."
+        );
+
+        if (submittedVersion === billVersion) clearBill();
+
+      } finally {
+        await loadDash();
+        actionBusy = false;
+        syncBusyUI();
+      }
+    }
+
+    async function send(text) {
+      if (chatBusy || actionBusy || scanBusy) return;
+
+      const content = String(
+        text === undefined ? msg.value : text
+      ).trim();
+
+      if (!content) return;
+
+      chatBusy = true;
+      syncBusyUI();
+
+      add("me", content);
+      msg.value = "";
+
+      const bubble = add("bot", "ఆలోచిస్తున్నాను...");
+
+      if (hasSpeech) window.speechSynthesis.cancel();
+
+      try {
+        const result = await api("/api/chat", {
+          method: "POST",
+          data: {
+            session_id: sid,
+            message: content
+          }
+        });
+
+        if (
+          result.success === false ||
+          typeof result.reply !== "string" ||
+          !result.reply.trim()
+        ) {
+          throw new Error(
+            result.message || "సరైన assistant reply రాలేదు."
+          );
+        }
+
+        const clean = result.reply.replace(/\*\*/g, "");
+        bubble.textContent = clean;
+
+        if (speak && hasSpeech) {
+          try {
+            const utterance = new SpeechSynthesisUtterance(clean);
+
+            utterance.lang = /[\u0C00-\u0C7F]/.test(clean)
+              ? "te-IN"
+              : "en-IN";
+
+            window.speechSynthesis.speak(utterance);
+          } catch (error) {
+            console.error("Spoken reply error:", error);
+          }
+        }
+
+      } catch (error) {
+        console.error("Chat error:", error);
+
+        bubble.textContent =
+          "❌ సమాధానం పొందడంలో లోపం వచ్చింది. " +
+          "మీరు transaction అడిగి ఉంటే, మళ్లీ పంపే ముందు " +
+          "తాజా stock / బాకీ వివరాలు పరిశీలించండి.";
+
+      } finally {
+        log.scrollTop = log.scrollHeight;
+
+        await refreshBusinessData();
+
+        chatBusy = false;
+        syncBusyUI();
+      }
+    }
+
+    async function draftOrders() {
+      if (!beginAction()) return;
+
+      try {
+        const result = await api("/api/draft", {
+          method: "POST"
+        });
+
+        if (
+          result.success === false ||
+          !Array.isArray(result.drafts)
+        ) {
+          throw new Error(
+            result.message || "Draft response సరిగా లేదు."
+          );
+        }
+
+        add(
+          "bot",
+          result.drafts.length
+            ? `📦 ${result.drafts.length} ఆర్డర్ డ్రాఫ్ట్‌లు సిద్ధం. ` +
+              "పైన కార్డులలో సరిచూసి ఆమోదించండి లేదా రద్దు చేయండి."
+            : "తక్కువ నిల్వ ఉన్న వస్తువులకు కొత్త డ్రాఫ్ట్‌లు లేవు."
+        );
+
+      } catch (error) {
+        console.error("Draft error:", error);
+
+        add(
+          "bot",
+          "❌ Draft request నిర్ధారణ పొందలేకపోయాను. " +
+          "మళ్లీ ప్రయత్నించే ముందు ప్రస్తుత orders చూడండి."
+        );
+
+      } finally {
+        await loadOrders();
+        actionBusy = false;
+        syncBusyUI();
+      }
+    }
+
+    async function showSummary() {
+      const ok = await loadDash();
+
+      if (!ok || !DASH) {
+        add("bot", "❌ తాజా సారాంశం పొందలేకపోయాను.");
+        return;
+      }
+
+      const data = DASH;
+      const top = list(data.best)[0];
+      const lowStock = list(data.low_stock).map(
+        item => item.product
+      ).join(", ") || "లేదు";
+
       add(
         "bot",
-        "❌ " +
-        (result.message || "Order action నిర్ధారణ పొందలేకపోయాను.") +
-        "\nమళ్లీ ప్రయత్నించే ముందు తాజా order status చూడండి."
+        "📊 దుకాణ సారాంశం\n" +
+        `ఈ రోజు ఆదాయం: ${money(data.sales.total_amount)} ` +
+        `(${number(data.sales.number_of_sales)} అమ్మకాలు)\n` +
+        `${loadedDays} రోజుల ఆదాయం: ${money(data.week_total)}\n` +
+        `ఎంచుకున్న కాలంలో ఎక్కువ అమ్ముడైనది: ${top ? top.name : "డేటా లేదు"}\n` +
+        `తక్కువ నిల్వ: ${lowStock}\n` +
+        `మొత్తం బాకీలు: ${money(data.credit_total)}\n` +
+        (
+          data.profit
+            ? `${loadedDays} రోజుల నికర లాభం: ` +
+              money(data.profit.net_profit)
+            : ""
+        )
       );
-      return;
     }
 
-    if (action === "cancel") {
-      add("bot", `✅ Order #${id} రద్దు చేయబడింది.`);
-      return;
+    async function shareSummary() {
+      const popup = window.open("about:blank", "_blank");
+
+      if (!popup) {
+        add(
+          "bot",
+          "WhatsApp summary తెరవడానికి ఈ siteకి pop-ups అనుమతించండి."
+        );
+        return;
+      }
+
+      try {
+        popup.opener = null;
+
+        const ok = await loadDash();
+
+        if (!ok || !DASH) {
+          popup.close();
+          add("bot", "❌ తాజా సారాంశం పొందలేకపోయాను.");
+          return;
+        }
+
+        const data = DASH;
+
+        const lowStock = list(data.low_stock).map(
+          item => item.product
+        ).join(", ") || "లేదు";
+
+        const text =
+          "📊 DukanMitra - దుకాణ సారాంశం\n" +
+          `ఈ రోజు ఆదాయం: ${money(data.sales.total_amount)} ` +
+          `(${number(data.sales.number_of_sales)} అమ్మకాలు)\n` +
+          `తక్కువ నిల్వ: ${lowStock}\n` +
+          `మొత్తం బాకీలు: ${money(data.credit_total)}\n` +
+          (
+            data.profit
+              ? `నికర లాభం (${loadedDays} రోజులు): ` +
+                money(data.profit.net_profit)
+              : ""
+          );
+
+        popup.location.replace(waLink("", text));
+
+      } catch (error) {
+        popup.close();
+        console.error("Summary share error:", error);
+        add("bot", "❌ WhatsApp summary తెరవలేకపోయాను.");
+      }
     }
 
-    add(
-      "bot",
-      `✅ Order #${id} ఆమోదించబడింది.\n` +
-      (result.message_to_send || "")
-    );
-
-    const bubble = document.createElement("div");
-    bubble.className = "bubble bot";
-
-    const link = document.createElement("a");
-    link.className = "wa-btn";
-    link.style.margin = "0";
-    link.target = "_blank";
-    link.rel = "noopener noreferrer";
-
-    link.href = waLink(
-      result.supplier_phone,
-      result.message_to_send || ""
-    );
-
-    link.textContent =
-      `📲 ${result.supplier || "Supplier"} కి WhatsApp లో పంపు`;
-
-    bubble.appendChild(link);
-    log.appendChild(bubble);
-    log.scrollTop = log.scrollHeight;
-
-  } catch (error) {
-    add(
-      "bot",
-      "❌ Order action నిర్ధారణ పొందలేకపోయాను. " +
-      "మళ్లీ ప్రయత్నించే ముందు తాజా order status చూడండి."
-    );
-
-    console.error("Order action error:", error);
-
-  } finally {
-    await Promise.allSettled([
-      loadOrders(),
-      loadDash()
-    ]);
-
-    pendingOrderActions.delete(id);
-  }
-}
-
-
-  let paymentBusy = false;
-
-async function pay(name, due) {
-  if (paymentBusy) return;
-
-  const balance = Number(due);
-
-  if (!Number.isFinite(balance) || balance <= 0) {
-    add("bot", "❌ చెల్లించాల్సిన బాకీ వివరాలు సరిగా లేవు.");
-    return;
-  }
-
-  const input = prompt(
-    `${name} ఎంత చెల్లించారు? (గరిష్టం ₹${balance})`,
-    String(balance)
-  );
-
-  if (input === null || input.trim() === "") return;
-
-  const amount = Number(input);
-
-  if (
-    !Number.isFinite(amount) ||
-    amount <= 0 ||
-    amount > balance
-  ) {
-    alert(`₹0 కంటే ఎక్కువ, ₹${balance} వరకు నమోదు చేయండి.`);
-    return;
-  }
-
-  const approved = confirm(
-    "చెల్లింపు వివరాలు సరిచూడండి:\n\n" +
-    `కస్టమర్: ${name}\n` +
-    `ప్రస్తుత బాకీ: ₹${balance}\n` +
-    `చెల్లించిన మొత్తం: ₹${amount}\n` +
-    `అంచనా మిగిలిన బాకీ: ₹${(balance - amount).toFixed(2)}\n\n` +
-    "ఈ చెల్లింపును నమోదు చేయాలా?"
-  );
-
-  if (!approved) return;
-
-  paymentBusy = true;
-
-  try {
-    const response = await fetch("/api/payment", {
-      method: "POST",
-      headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({name, amount})
+    $("row").addEventListener("submit", event => {
+      event.preventDefault();
+      send();
     });
 
-    const result = await response.json();
-
-    if (!response.ok || !result.success) {
-      throw new Error(
-        result.message || "చెల్లింపు నమోదు కాలేదు."
+    document.querySelectorAll("[data-q]").forEach(button => {
+      button.addEventListener(
+        "click",
+        () => send(button.dataset.q)
       );
-    }
-
-    add(
-      "bot",
-      `✅ ${result.customer} ₹${result.paid} చెల్లించారు.\n` +
-      `మిగిలిన బాకీ: ₹${result.balance_left}`
-    );
-
-  } catch (error) {
-    add(
-      "bot",
-      "❌ చెల్లింపు నిర్ధారణ పొందలేకపోయాను. " +
-      "మళ్లీ నమోదు చేసే ముందు తాజా బాకీ వివరాలు చూడండి.\n" +
-      error.message
-    );
-
-  } finally {
-    paymentBusy = false;
-    await loadDash();
-  }
-}
-
-/* ---------- 📸 బిల్ ఫోటో ---------- */
-$("qbill").onclick = () => $("billfile").click();
-
-$("billfile").onchange = async e => {
-  const f = e.target.files[0];
-  if (!f) return;
-  const b = add("bot", "📸 బిల్ చదువుతున్నాను...");
-  const fd = new FormData();
-  fd.append("image", f);
-  try {
-    const r = await (await fetch("/api/scan-bill", {method: "POST", body: fd})).json();
-    if (!r.success) { b.textContent = "❌ " + r.message; }
-    else { b.textContent = "🧾 బిల్ చదివాను. పైన సరిచూసి ఆమోదించండి."; showBill(r.items); }
-  } catch (err) { b.textContent = "❌ బిల్ చదవడంలో లోపం. మళ్ళీ ప్రయత్నించండి."; }
-  e.target.value = "";
-};
-
-function showBill(items) {
-  BILL = items;
-  const rows = items.map((it, i) => it.product_id
-    ? `<div class="billrow"><span>${it.product}</span>
-         <span><input type="number" step="any" min="0" id="bq${i}" value="${it.quantity}"> ${it.unit}</span></div>`
-    : `<div class="billrow" style="color:#c62828"><span>${it.name}</span><span>జాబితాలో లేదు</span></div>`
-  ).join("");
-  $("billbox").innerHTML = `<div class="order"><b>🧾 బిల్ నుండి చదివినవి</b>${rows}
-    <div style="margin-top:8px">
-      <button class="ok" onclick="applyBill()">✅ స్టాక్‌లో చేర్చు</button>
-      <button class="no" onclick="$('billbox').innerHTML=''">❌ రద్దు</button>
-    </div></div>`;
-}
-
-async function applyBill() {
-  const rows = BILL.map((it, i) => it.product_id
-    ? {product_id: it.product_id, quantity: +$("bq" + i).value} : null).filter(Boolean);
-  const r = await (await fetch("/api/apply-bill", {
-    method: "POST", headers: {"Content-Type": "application/json"},
-    body: JSON.stringify({rows})})).json();
-  add("bot", r.success
-    ? "✅ స్టాక్ నవీకరించబడింది:\n" + r.updated.map(u => `${u.product}: ${u.stock} ${u.unit}`).join("\n")
-    : "❌ " + r.message);
-  $("billbox").innerHTML = "";
-  loadDash();
-}
-
-/* ---------- 📲 రోజువారీ సారాంశం WhatsApp ---------- */
-$("qwa").onclick = async () => {
-  await loadDash();
-  const d = DASH;
-  if (!d) return;
-  const low = d.low_stock.map(i => i.product).join(", ") || "లేదు";
-  const text = `📊 DukanMitra - ఈ రోజు సారాంశం\n` +
-    `ఆదాయం: ₹${d.sales.total_amount || 0} (${d.sales.number_of_sales} అమ్మకాలు)\n` +
-    `తక్కువ నిల్వ: ${low}\n` +
-    `మొత్తం బాకీలు: ₹${d.credit_total}\n` +
-    `నికర లాభం (${DAYS} రోజులు): ₹${d.profit.net_profit}`;
-  window.open(waLink("", text), "_blank");
-};
-
-let chatBusy = false;
-
-async function send(text) {
-  if (chatBusy) return;
-
-  const content =
-    String(text === undefined ? msg.value : text).trim();
-
-  if (!content) return;
-
-  chatBusy = true;
-  $("send").disabled = true;
-  $("mic").disabled = true;
-  msg.disabled = true;
-
-  add("me", content);
-  msg.value = "";
-
-  const bubble = add("bot", "ఆలోచిస్తున్నాను...");
-
-  try {
-    const response = await fetch("/api/chat", {
-      method: "POST",
-      headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({
-        session_id: sid,
-        message: content
-      })
     });
 
-    const data = await response.json();
+    document.querySelectorAll(".filter button").forEach(button => {
+      button.addEventListener("click", () => {
+        DAYS = Number(button.dataset.d);
 
-    if (!response.ok) {
-      throw new Error(
-        data.message || "Assistant request failed."
-      );
+        document.querySelectorAll(".filter button").forEach(item => {
+          const active = item === button;
+          item.classList.toggle("act", active);
+          item.setAttribute("aria-pressed", String(active));
+        });
+
+        loadDash();
+      });
+    });
+
+    $("retry-dashboard").addEventListener(
+      "click",
+      refreshBusinessData
+    );
+
+    $("qsum").addEventListener("click", showSummary);
+    $("qwa").addEventListener("click", shareSummary);
+    $("qdraft").addEventListener("click", draftOrders);
+
+    $("qbill").addEventListener("click", () => {
+      $("billfile").click();
+    });
+
+    $("billfile").addEventListener("change", scanBill);
+
+    $("spk").disabled = !hasSpeech;
+    $("spk").textContent = speak ? "🔊" : "🔇";
+    $("spk").setAttribute("aria-pressed", String(speak));
+
+    $("spk").addEventListener("click", () => {
+      speak = !speak;
+      $("spk").textContent = speak ? "🔊" : "🔇";
+      $("spk").setAttribute("aria-pressed", String(speak));
+
+      if (!speak && hasSpeech) {
+        window.speechSynthesis.cancel();
+      }
+    });
+
+    const SpeechRecognition =
+      window.SpeechRecognition ||
+      window.webkitSpeechRecognition;
+
+    if (SpeechRecognition) {
+      const recognition = new SpeechRecognition();
+      let listening = false;
+
+      recognition.lang = "te-IN";
+      recognition.interimResults = false;
+      recognition.continuous = false;
+      recognition.maxAlternatives = 1;
+
+      recognition.onstart = () => {
+        listening = true;
+        $("mic").classList.add("on");
+      };
+
+      recognition.onend = () => {
+        listening = false;
+        $("mic").classList.remove("on");
+      };
+
+      recognition.onresult = event => {
+        const transcript =
+          event.results[0] &&
+          event.results[0][0] &&
+          event.results[0][0].transcript;
+
+        if (transcript) send(transcript);
+      };
+
+      recognition.onerror = event => {
+        console.error("Microphone error:", event.error);
+
+        const messages = {
+          "not-allowed":
+            "మైక్రోఫోన్ permission ఇవ్వండి.",
+          "audio-capture":
+            "మైక్రోఫోన్ అందుబాటులో లేదు.",
+          "no-speech":
+            "మాట వినిపించలేదు. మళ్లీ ప్రయత్నించండి.",
+          "network":
+            "Voice recognition network error. టైప్ చేసి అడగండి."
+        };
+
+        if (event.error !== "aborted") {
+          add(
+            "bot",
+            "🎤 " +
+            (messages[event.error] ||
+             "Voice input పనిచేయలేదు. టైప్ చేసి అడగండి.")
+          );
+        }
+      };
+
+      $("mic").addEventListener("click", () => {
+        if (chatBusy || actionBusy || scanBusy) return;
+
+        if (listening) {
+          recognition.stop();
+          return;
+        }
+
+        if (hasSpeech) window.speechSynthesis.cancel();
+
+        try {
+          recognition.start();
+        } catch (error) {
+          console.error("Microphone start error:", error);
+        }
+      });
+
+    } else {
+      $("mic").hidden = true;
     }
 
-    if (
-      typeof data.reply !== "string" ||
-      !data.reply.trim()
-    ) {
-      throw new Error("Assistant నుంచి సరైన reply రాలేదు.");
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("/sw.js").catch(error => {
+        console.error("Service worker error:", error);
+      });
     }
 
-    const clean = data.reply.replace(/\*\*/g, "");
-    bubble.textContent = clean;
+    let deferredPrompt = null;
 
-    if (speak && "speechSynthesis" in window) {
-      window.speechSynthesis.cancel();
+    window.addEventListener("beforeinstallprompt", event => {
+      event.preventDefault();
+      deferredPrompt = event;
+      $("install").hidden = false;
+    });
 
-      const utterance = new SpeechSynthesisUtterance(clean);
-      utterance.lang =
-        /[\u0C00-\u0C7F]/.test(clean) ? "te-IN" : "en-IN";
+    $("install").addEventListener("click", async () => {
+      if (!deferredPrompt) return;
 
-      window.speechSynthesis.speak(utterance);
-    }
+      const prompt = deferredPrompt;
+      deferredPrompt = null;
+      $("install").hidden = true;
 
-  } catch (error) {
-    bubble.textContent =
-      "❌ సమాధానం పొందడంలో లోపం వచ్చింది. " +
-      "మీరు transaction అడిగి ఉంటే, మళ్లీ పంపే ముందు " +
-      "తాజా stock / బాకీ వివరాలు పరిశీలించండి.";
+      try {
+        await prompt.prompt();
+        await prompt.userChoice;
+      } catch (error) {
+        console.error("Install prompt error:", error);
+      }
+    });
 
-    console.error("Chat error:", error);
+    window.addEventListener("appinstalled", () => {
+      deferredPrompt = null;
+      $("install").hidden = true;
+    });
 
-  } finally {
-    chatBusy = false;
-    $("send").disabled = false;
-    $("mic").disabled = false;
-    msg.disabled = false;
+    add(
+      "bot",
+      "నమస్తే! నేను DukanMitra.\n" +
+      "స్టాక్, ధరలు, అమ్మకాలు, లాభం, బాకీల గురించి అడగండి.\n\n" +
+      "ఉదాహరణ: రమేష్ కి 2 కిలో చక్కెర ఉద్దెర అమ్మాను"
+    );
 
-    log.scrollTop = log.scrollHeight;
-    msg.focus();
-
-    await Promise.allSettled([
-      loadDash(),
-      loadOrders()
-    ]);
-  }
-}
-
-$("send").onclick = () => send();
-msg.addEventListener("keydown", e => { if (e.key === "Enter") send(); });
-document.querySelectorAll(".quick button[data-q]").forEach(b => b.onclick = () => send(b.dataset.q));
-
-document.querySelectorAll(".filter button").forEach(b => b.onclick = () => {
-  DAYS = +b.dataset.d;
-  document.querySelectorAll(".filter button").forEach(x => x.classList.remove("act"));
-  b.classList.add("act"); loadDash();
-});
-
-$("qdraft").onclick = async () => {
-  const d = await (await fetch("/api/draft", {method: "POST"})).json();
-  add("bot", d.drafts.length
-    ? "📦 " + d.drafts.length + " ఆర్డర్ డ్రాఫ్ట్‌లు సిద్ధం. పైన కార్డులలో ఆమోదించండి లేదా రద్దు చేయండి."
-    : "తక్కువ నిల్వ ఉన్న వస్తువులు లేవు ✅");
-  loadOrders();
-};
-
-$("qsum").onclick = async () => {
-  await loadDash(); const d = DASH;
-  if (!d) return;
-  const top = d.best[0] ? d.best[0].name : "-";
-  add("bot", "📊 ఈ రోజు సారాంశం\nఆదాయం: ₹" + (d.sales.total_amount || 0) + " (" + d.sales.number_of_sales + " అమ్మకాలు)\n" +
-    "ఎంచుకున్న కాలం ఆదాయం: ₹" + d.week_total + "\nఎక్కువగా అమ్ముడైనది: " + top + "\n" +
-    "తక్కువ నిల్వ: " + d.low_stock.map(i => i.product).join(", ") + "\n" +
-    "బాకీలు: ₹" + d.credit_total);
-};
-
-const SR = window.SpeechRecognition || window.webkitSpeechRecognition, mic = $("mic");
-if (SR) {
-  const rec = new SR(); rec.lang = "te-IN";
-  rec.onstart = () => mic.classList.add("on"); rec.onend = () => mic.classList.remove("on");
-  rec.onresult = e => send(e.results[0][0].transcript);
-  mic.onclick = () => rec.start();
-} else { mic.style.display = "none"; }
-
-/* ---------- 📱 PWA ---------- */
-if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("/sw.js").catch(err => console.error("SW లోపం:", err));
-}
-let deferredPrompt = null;
-window.addEventListener("beforeinstallprompt", e => {
-  e.preventDefault();
-  deferredPrompt = e;
-  $("install").style.display = "inline-block";
-});
-$("install").onclick = async () => {
-  if (!deferredPrompt) return;
-  deferredPrompt.prompt();
-  await deferredPrompt.userChoice;
-  deferredPrompt = null;
-  $("install").style.display = "none";
-};
-window.addEventListener("appinstalled", () => { $("install").style.display = "none"; });
-
-loadDash(); loadOrders();
-add("bot", "నమస్తే! నేను DukanMitra. స్టాక్, ధరలు, అమ్మకాలు, బాకీల గురించి అడగండి.\nఉదాహరణ: రమేష్ కి 2 కిలో చక్కెర ఉద్దెర అమ్మాను");
-</script>
+    refreshBusinessData();
+  </script>
 </body>
 </html>
