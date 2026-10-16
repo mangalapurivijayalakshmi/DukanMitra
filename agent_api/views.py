@@ -1,15 +1,20 @@
 import json
+import logging
 import struct
 import zlib
+
 from datetime import date, timedelta
 from functools import lru_cache
+
 from django.http import JsonResponse, HttpResponse, Http404
 from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
 from django.db.models import Sum
+
 from . import tools, bill, festival
 from .agent import chat
 
+logger = logging.getLogger(__name__)
 
 def home(request):
     return render(request, "chat.html")
@@ -25,7 +30,7 @@ def chat_api(request):
     try:
         reply = chat(session_id, message)
     except Exception as e:
-        print("chat error:", e)
+       logger.exception("Chat request failed")
         if "429" in str(e):
             reply = "ప్రస్తుతం AI సేవ పరిమితి అయిపోయింది. కొద్దిసేపటి తర్వాత ప్రయత్నించండి."
         else:
