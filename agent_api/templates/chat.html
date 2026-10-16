@@ -79,6 +79,213 @@
   #credit .item { flex-wrap:wrap; gap:4px; }
   #credit .item > span:last-child { display:flex; align-items:center; flex-wrap:wrap; gap:4px; justify-content:flex-end; }
   #credit .wa-btn { margin-left:0; }
+/* ---------- Readability and desktop layout ---------- */
+
+body {
+  font-size: 16px;
+  line-height: 1.55;
+}
+
+.page {
+  width: 100%;
+  max-width: 1680px;
+  padding: 24px;
+}
+
+.grid {
+  grid-template-columns:
+    minmax(0, 1fr)
+    minmax(0, 1fr)
+    minmax(360px, 1.25fr);
+  gap: 20px;
+}
+
+.grid > * {
+  min-width: 0;
+}
+
+.kpis {
+  gap: 18px;
+  margin-bottom: 22px;
+}
+
+.kpi {
+  padding: 20px;
+}
+
+.kpi small {
+  font-size: 14px;
+}
+
+.kpi b {
+  font-size: 32px;
+}
+
+.card {
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.card h3 {
+  font-size: 18px;
+  line-height: 1.5;
+  margin-bottom: 14px;
+}
+
+.item,
+.crow .top,
+.billrow {
+  font-size: 16px;
+  gap: 12px;
+}
+
+.item {
+  padding: 9px 0;
+}
+
+.item > span {
+  overflow-wrap: anywhere;
+}
+
+.sub {
+  font-size: 14px;
+}
+
+.crow {
+  padding: 12px 0;
+}
+
+.crow .btns button {
+  font-size: 14px;
+  padding: 10px 12px;
+  min-height: 42px;
+}
+
+.quick {
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.quick button {
+  font-size: 14px;
+  padding: 8px 12px;
+  min-height: 40px;
+}
+
+.chatcol {
+  top: 16px;
+}
+
+#log {
+  height: clamp(320px, 46vh, 580px);
+  padding: 8px 2px;
+}
+
+.bubble {
+  font-size: 16px;
+  line-height: 1.7;
+  padding: 12px 14px;
+  overflow-wrap: anywhere;
+}
+
+#row {
+  align-items: center;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+#msg {
+  font-size: 16px;
+  min-height: 48px;
+}
+
+#send {
+  min-height: 48px;
+  padding: 0 18px;
+}
+
+#mic {
+  flex: 0 0 46px;
+  width: 46px;
+  height: 46px;
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible {
+  outline: 3px solid #1e88e5;
+  outline-offset: 3px;
+}
+
+#chart {
+  height: 180px;
+}
+
+@media (max-width: 1200px) {
+  .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .chatcol {
+    grid-column: 1 / -1;
+    position: static;
+  }
+}
+
+@media (max-width: 700px) {
+  header {
+    padding: 14px 16px;
+    gap: 8px;
+  }
+
+  header h1 {
+    font-size: 21px;
+  }
+
+  .page {
+    padding: 12px;
+  }
+
+  .grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+  }
+
+  .kpis {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .kpi {
+    padding: 14px 12px;
+  }
+
+  .kpi b {
+    font-size: 25px;
+  }
+
+  .kpi small {
+    font-size: 12px;
+  }
+
+  .card {
+    padding: 16px;
+  }
+
+  .card h3 {
+    font-size: 17px;
+  }
+
+  #log {
+    height: 380px;
+  }
+}
+
 
 </style>
 </head>
@@ -246,21 +453,102 @@ async function loadDash() {
     const warn = oldDue.length
       ? `<div class="overdue">⚠️ 30+ రోజుల బాకీ: <b>₹${oldTotal}</b> (${oldDue.length} కస్టమర్లు)</div>` : "";
 
-    $("credit").innerHTML = warn + (d.credit.length ? d.credit.map(c => {
-      const dd = c.days;
-      const cls = dd === null ? "" : dd >= 30 ? "age-red" : dd >= 15 ? "age-orange" : "age-green";
-      const badge = dd === null ? "" : `<span class="age ${cls}">${dd} రోజులు</span>`;
-      const since = dd ? `\nఇది ${dd} రోజులుగా పెండింగ్‌లో ఉంది.` : "";
-      const text = `నమస్తే ${c.name} గారు 🙏\nమీ బాకీ ₹${c.balance_due} ఉంది.${since}\nవీలైనప్పుడు చెల్లించగలరు.\nధన్యవాదాలు - DukanMitra`;
-      return `<div class="crow">
-                <div class="top"><span>${c.name} ${c.age_tag || ""}</span><b>₹${c.balance_due}</b></div>
-                <div class="btns">
-                  <button style="background:#25d366" onclick="remind('${c.name}')">📲 రిమైండర్</button>
-                  <button style="background:#1b8a4b" onclick="pay('${c.name}')">💰 చెల్లించారు</button>
-                </div>
-              </div>`
-      
-    }).join("") : "బాకీలు లేవు");
+$("credit").replaceChildren();
+
+if (oldDue.length) {
+  const warning = document.createElement("div");
+  warning.className = "overdue";
+  warning.textContent =
+    `⚠️ 30+ రోజుల బాకీ: ₹${oldTotal} ` +
+    `(${oldDue.length} కస్టమర్లు)`;
+
+  $("credit").appendChild(warning);
+}
+
+if (!d.credit.length) {
+  const empty = document.createElement("p");
+  empty.textContent = "బాకీలు లేవు ✅";
+  $("credit").appendChild(empty);
+}
+
+d.credit.forEach(c => {
+  const row = document.createElement("div");
+  row.className = "crow";
+
+  const top = document.createElement("div");
+  top.className = "top";
+
+  const customer = document.createElement("span");
+  customer.textContent = c.name;
+
+  const days = c.days;
+
+  if (Number.isFinite(days)) {
+    const badge = document.createElement("span");
+
+    const ageClass =
+      days >= 30 ? "age-red" :
+      days >= 15 ? "age-orange" :
+      "age-green";
+
+    badge.className = "age " + ageClass;
+    badge.style.marginLeft = "6px";
+    badge.textContent = `${days} రోజులు`;
+
+    customer.appendChild(badge);
+  }
+
+  const amount = document.createElement("b");
+  amount.textContent = `₹${c.balance_due}`;
+
+  top.append(customer, amount);
+
+  const buttons = document.createElement("div");
+  buttons.className = "btns";
+
+  const reminder = document.createElement("button");
+  reminder.type = "button";
+  reminder.style.background = "#25d366";
+  reminder.textContent = "📲 రిమైండర్";
+
+  reminder.onclick = () => {
+    const phone = String(c.phone || "").trim();
+
+    if (!phone.replace(/\D/g, "")) {
+      alert("ఈ కస్టమర్ ఫోన్ నంబర్ అందుబాటులో లేదు.");
+      return;
+    }
+
+    const pending =
+      Number.isFinite(days) && days > 0
+        ? `\nఇది ${days} రోజులుగా పెండింగ్‌లో ఉంది.`
+        : "";
+
+    const text =
+      `నమస్తే ${c.name} గారు 🙏\n` +
+      `మీ బాకీ ₹${c.balance_due} ఉంది.` +
+      pending +
+      "\nవీలైనప్పుడు చెల్లించగలరు.\n" +
+      "ధన్యవాదాలు - DukanMitra";
+
+    window.open(
+      waLink(phone, text),
+      "_blank",
+      "noopener,noreferrer"
+    );
+  };
+
+  const payment = document.createElement("button");
+  payment.type = "button";
+  payment.style.background = "#1b8a4b";
+  payment.textContent = "💰 చెల్లించారు";
+  payment.onclick = () => pay(c.name, c.balance_due);
+
+  buttons.append(reminder, payment);
+  row.append(top, buttons);
+
+  $("credit").appendChild(row);
+});
 
     const p = d.profit;
     $("profit").innerHTML = `
@@ -293,33 +581,167 @@ async function loadOrders() {
   } catch (e) { console.error("loadOrders లోపం:", e); }
 }
 
+const pendingOrderActions = new Set();
+
 async function act(id, action) {
-  if (action === "approve" && !confirm("Order #" + id + " ని supplier కి ఆమోదించాలా?")) return;
-  const r = await (await fetch("/api/order-action", {
-    method: "POST", headers: {"Content-Type": "application/json"},
-    body: JSON.stringify({id, action})})).json();
-  add("bot", action === "approve" && r.success
-    ? "✅ Order #" + id + " ఆమోదించబడింది.\n" + (r.message_to_send || "")
-    : "❌ Order #" + id + " రద్దు చేయబడింది.");
-  if (action === "approve" && r.success) {
-    const d = document.createElement("div");
-    d.className = "bubble bot";
-    d.innerHTML = `<a class="wa-btn" style="margin:0" target="_blank" href="${waLink(r.supplier_phone, r.message_to_send || "")}">📲 ${r.supplier || "Supplier"} కి WhatsApp లో పంపు</a>`;
-    log.appendChild(d); log.scrollTop = log.scrollHeight;
+  if (!["approve", "cancel"].includes(action)) return;
+  if (pendingOrderActions.has(id)) return;
+
+  const question = action === "approve"
+    ? `Order #${id} ని supplier కి ఆమోదించాలా?`
+    : `Order #${id} ని రద్దు చేయాలా?`;
+
+  if (!confirm(question)) return;
+
+  pendingOrderActions.add(id);
+
+  try {
+    const response = await fetch("/api/order-action", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({id, action})
+    });
+
+    const result = await response.json();
+
+    if (!response.ok || result.success !== true) {
+      add(
+        "bot",
+        "❌ " +
+        (result.message || "Order action నిర్ధారణ పొందలేకపోయాను.") +
+        "\nమళ్లీ ప్రయత్నించే ముందు తాజా order status చూడండి."
+      );
+      return;
+    }
+
+    if (action === "cancel") {
+      add("bot", `✅ Order #${id} రద్దు చేయబడింది.`);
+      return;
+    }
+
+    add(
+      "bot",
+      `✅ Order #${id} ఆమోదించబడింది.\n` +
+      (result.message_to_send || "")
+    );
+
+    const bubble = document.createElement("div");
+    bubble.className = "bubble bot";
+
+    const link = document.createElement("a");
+    link.className = "wa-btn";
+    link.style.margin = "0";
+    link.target = "_blank";
+    link.rel = "noopener noreferrer";
+
+    link.href = waLink(
+      result.supplier_phone,
+      result.message_to_send || ""
+    );
+
+    link.textContent =
+      `📲 ${result.supplier || "Supplier"} కి WhatsApp లో పంపు`;
+
+    bubble.appendChild(link);
+    log.appendChild(bubble);
+    log.scrollTop = log.scrollHeight;
+
+  } catch (error) {
+    add(
+      "bot",
+      "❌ Order action నిర్ధారణ పొందలేకపోయాను. " +
+      "మళ్లీ ప్రయత్నించే ముందు తాజా order status చూడండి."
+    );
+
+    console.error("Order action error:", error);
+
+  } finally {
+    await Promise.allSettled([
+      loadOrders(),
+      loadDash()
+    ]);
+
+    pendingOrderActions.delete(id);
   }
-  loadOrders(); loadDash();
 }
 
+
+  let paymentBusy = false;
+
 async function pay(name, due) {
-  const a = prompt(name + " ఎంత చెల్లించారు? (గరిష్టం ₹" + due + ")", due);
-  if (!a) return;
-  const r = await (await fetch("/api/payment", {
-    method: "POST", headers: {"Content-Type": "application/json"},
-    body: JSON.stringify({name, amount: +a})})).json();
-  add("bot", r.success
-    ? `✅ ${r.customer} ₹${r.paid} చెల్లించారు. మిగిలిన బాకీ ₹${r.balance_left}`
-    : "❌ " + r.message);
-  loadDash();
+  if (paymentBusy) return;
+
+  const balance = Number(due);
+
+  if (!Number.isFinite(balance) || balance <= 0) {
+    add("bot", "❌ చెల్లించాల్సిన బాకీ వివరాలు సరిగా లేవు.");
+    return;
+  }
+
+  const input = prompt(
+    `${name} ఎంత చెల్లించారు? (గరిష్టం ₹${balance})`,
+    String(balance)
+  );
+
+  if (input === null || input.trim() === "") return;
+
+  const amount = Number(input);
+
+  if (
+    !Number.isFinite(amount) ||
+    amount <= 0 ||
+    amount > balance
+  ) {
+    alert(`₹0 కంటే ఎక్కువ, ₹${balance} వరకు నమోదు చేయండి.`);
+    return;
+  }
+
+  const approved = confirm(
+    "చెల్లింపు వివరాలు సరిచూడండి:\n\n" +
+    `కస్టమర్: ${name}\n` +
+    `ప్రస్తుత బాకీ: ₹${balance}\n` +
+    `చెల్లించిన మొత్తం: ₹${amount}\n` +
+    `అంచనా మిగిలిన బాకీ: ₹${(balance - amount).toFixed(2)}\n\n` +
+    "ఈ చెల్లింపును నమోదు చేయాలా?"
+  );
+
+  if (!approved) return;
+
+  paymentBusy = true;
+
+  try {
+    const response = await fetch("/api/payment", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({name, amount})
+    });
+
+    const result = await response.json();
+
+    if (!response.ok || !result.success) {
+      throw new Error(
+        result.message || "చెల్లింపు నమోదు కాలేదు."
+      );
+    }
+
+    add(
+      "bot",
+      `✅ ${result.customer} ₹${result.paid} చెల్లించారు.\n` +
+      `మిగిలిన బాకీ: ₹${result.balance_left}`
+    );
+
+  } catch (error) {
+    add(
+      "bot",
+      "❌ చెల్లింపు నిర్ధారణ పొందలేకపోయాను. " +
+      "మళ్లీ నమోదు చేసే ముందు తాజా బాకీ వివరాలు చూడండి.\n" +
+      error.message
+    );
+
+  } finally {
+    paymentBusy = false;
+    await loadDash();
+  }
 }
 
 /* ---------- 📸 బిల్ ఫోటో ---------- */
@@ -380,21 +802,86 @@ $("qwa").onclick = async () => {
   window.open(waLink("", text), "_blank");
 };
 
+let chatBusy = false;
+
 async function send(text) {
-  text = (text || msg.value).trim();
-  if (!text) return;
-  add("me", text); msg.value = "";
-  const b = add("bot", "ఆలోచిస్తున్నాను...");
+  if (chatBusy) return;
+
+  const content =
+    String(text === undefined ? msg.value : text).trim();
+
+  if (!content) return;
+
+  chatBusy = true;
+  $("send").disabled = true;
+  $("mic").disabled = true;
+  msg.disabled = true;
+
+  add("me", content);
+  msg.value = "";
+
+  const bubble = add("bot", "ఆలోచిస్తున్నాను...");
+
   try {
-    const r = await fetch("/api/chat", {
-      method: "POST", headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({session_id: sid, message: text})});
-    const data = await r.json();
+    const response = await fetch("/api/chat", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({
+        session_id: sid,
+        message: content
+      })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        data.message || "Assistant request failed."
+      );
+    }
+
+    if (
+      typeof data.reply !== "string" ||
+      !data.reply.trim()
+    ) {
+      throw new Error("Assistant నుంచి సరైన reply రాలేదు.");
+    }
+
     const clean = data.reply.replace(/\*\*/g, "");
-    b.textContent = clean;
-    if (speak) speechSynthesis.speak(new SpeechSynthesisUtterance(clean));
-  } catch (e) { b.textContent = "లోపం జరిగింది, మళ్ళీ ప్రయత్నించండి."; }
-  loadDash(); loadOrders();
+    bubble.textContent = clean;
+
+    if (speak && "speechSynthesis" in window) {
+      window.speechSynthesis.cancel();
+
+      const utterance = new SpeechSynthesisUtterance(clean);
+      utterance.lang =
+        /[\u0C00-\u0C7F]/.test(clean) ? "te-IN" : "en-IN";
+
+      window.speechSynthesis.speak(utterance);
+    }
+
+  } catch (error) {
+    bubble.textContent =
+      "❌ సమాధానం పొందడంలో లోపం వచ్చింది. " +
+      "మీరు transaction అడిగి ఉంటే, మళ్లీ పంపే ముందు " +
+      "తాజా stock / బాకీ వివరాలు పరిశీలించండి.";
+
+    console.error("Chat error:", error);
+
+  } finally {
+    chatBusy = false;
+    $("send").disabled = false;
+    $("mic").disabled = false;
+    msg.disabled = false;
+
+    log.scrollTop = log.scrollHeight;
+    msg.focus();
+
+    await Promise.allSettled([
+      loadDash(),
+      loadOrders()
+    ]);
+  }
 }
 
 $("send").onclick = () => send();
