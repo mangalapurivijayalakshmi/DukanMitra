@@ -10,7 +10,7 @@ charset-normalizer==3.5.2
 click==8.5.0
 cryptography==50.0.2
 distro==1.9.0
-Django>=5.2,<5.3
+Django==6.1.2
 google-auth==2.61.0
 google-genai==2.29.0
 h11==0.16.0
