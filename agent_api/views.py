@@ -8,14 +8,19 @@ from functools import lru_cache
 
 from django.http import JsonResponse, HttpResponse, Http404
 from django.shortcuts import render
-from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.csrf import (
+    csrf_exempt,
+    csrf_protect,
+    ensure_csrf_cookie,
+)
 from django.db.models import Sum
 
-from . import tools, bill, festival
+from . import tools, bill, festival, approvals
 from .agent import chat
 
 logger = logging.getLogger(__name__)
 
+@ensure_csrf_cookie
 def home(request):
     return render(request, "chat.html")
 
@@ -39,9 +44,15 @@ def chat_api(request):
         return JsonResponse({"success": False, "message": "Session ID అవసరం."}, status=400)
     if not isinstance(message, str) or not message.strip():
         return JsonResponse({"success": False, "message": "మీ ప్రశ్నను నమోదు చేయండి."}, status=400)
-
     try:
-        reply = chat(session_id.strip(), message.strip())
+        if not request.session.session_key:
+            request.session.create()
+
+        reply = chat(
+            session_id=session_id.strip(),
+            message=message.strip(),
+            owner_session_key=request.session.session_key,
+        )
     except Exception as error:
         logger.exception("Chat request failed")
         if "429" in str(error):
@@ -200,6 +211,126 @@ self.addEventListener("fetch", e => {
 });
 """
 
+def pending_actions_api(request):
+    if request.method != "GET":
+        response = JsonResponse(
+            {
+                "success": False,
+                "message": "GET only",
+            },
+            status=405,
+        )
+        response["Allow"] = "GET"
+        response["Cache-Control"] = "no-store"
+        return response
+
+    result = approvals.list_pending_actions(
+        owner_session_key=request.session.session_key
+    )
+
+    http_status = result.pop("http_status", 200)
+
+    response = JsonResponse(
+        result,
+        status=http_status,
+    )
+
+    response["Cache-Control"] = "no-store"
+    return response
+
+
+@csrf_protect
+def pending_action_api(request):
+    if request.method != "POST":
+        response = JsonResponse(
+            {
+                "success": False,
+                "message": "POST only",
+            },
+            status=405,
+        )
+        response["Allow"] = "POST"
+        response["Cache-Control"] = "no-store"
+        return response
+
+    owner_session_key = request.session.session_key
+
+    if not owner_session_key:
+        response = JsonResponse(
+            {
+                "success": False,
+                "message": (
+                    "Server session అందుబాటులో లేదు. "
+                    "Page refresh చేసి కొత్త proposal తీసుకోండి."
+                ),
+            },
+            status=403,
+        )
+        response["Cache-Control"] = "no-store"
+        return response
+
+    try:
+        data = json.loads(request.body)
+
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        response = JsonResponse(
+            {
+                "success": False,
+                "message": "సరైన JSON data పంపండి.",
+            },
+            status=400,
+        )
+        response["Cache-Control"] = "no-store"
+        return response
+
+    if not isinstance(data, dict):
+        response = JsonResponse(
+            {
+                "success": False,
+                "message": "JSON object అవసరం.",
+            },
+            status=400,
+        )
+        response["Cache-Control"] = "no-store"
+        return response
+
+    action_id = data.get("id")
+    action = data.get("action")
+
+    if (
+        not isinstance(action_id, str)
+        or not action_id.strip()
+        or not isinstance(action, str)
+        or action not in {"confirm", "cancel"}
+    ):
+        response = JsonResponse(
+            {
+                "success": False,
+                "message": (
+                    "Valid proposal ID మరియు "
+                    "confirm/cancel action అవసరం."
+                ),
+            },
+            status=400,
+        )
+        response["Cache-Control"] = "no-store"
+        return response
+
+    result = approvals.process_pending_action(
+        owner_session_key=owner_session_key,
+        action_id=action_id.strip(),
+        action=action,
+    )
+
+    http_status = result.pop("http_status", 200)
+
+    response = JsonResponse(
+        result,
+        status=http_status,
+    )
+
+    response["Cache-Control"] = "no-store"
+    return response
 
 def service_worker(request):
     resp = HttpResponse(SW_JS, content_type="application/javascript")

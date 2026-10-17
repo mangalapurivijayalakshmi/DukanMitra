@@ -868,6 +868,7 @@
 
         <p id="orders-status" role="status" hidden></p>
 
+        <div id="pending-actions"></div>
         <div id="orders"></div>
         <div id="billbox"></div>
 
@@ -1120,7 +1121,8 @@
     async function refreshBusinessData() {
       await Promise.allSettled([
         loadDash(),
-        loadOrders()
+        loadOrders(),
+        loadPendingActions()
       ]);
     }
 
@@ -2457,6 +2459,404 @@
     );
 
     refreshBusinessData();
+  
+  /* ---------- Pending sale approval cards ---------- */
+
+let pendingApprovalBusy = false;
+let pendingApprovalRequest = 0;
+
+function approvalElement(tag, className = "", text) {
+  const element = document.createElement(tag);
+
+  if (className) {
+    element.className = className;
+  }
+
+  if (text !== undefined) {
+    element.textContent = String(text);
+  }
+
+  return element;
+}
+
+function approvalMoney(value) {
+  const amount = Number(value);
+
+  if (!Number.isFinite(amount)) {
+    return "—";
+  }
+
+  return new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: "INR",
+    maximumFractionDigits: 2
+  }).format(amount);
+}
+
+function approvalCsrfToken() {
+  const input = document.querySelector(
+    "[name=csrfmiddlewaretoken]"
+  );
+
+  if (input && input.value) {
+    return input.value;
+  }
+
+  const cookie = document.cookie
+    .split("; ")
+    .find(item => item.startsWith("csrftoken="));
+
+  return cookie
+    ? decodeURIComponent(cookie.slice("csrftoken=".length))
+    : "";
+}
+
+function setApprovalButtonsDisabled(disabled) {
+  document.querySelectorAll(
+    "#pending-actions button"
+  ).forEach(button => {
+    button.disabled = disabled;
+  });
+}
+
+async function approvalReadJson(response) {
+  let data;
+
+  try {
+    data = await response.json();
+  } catch {
+    throw new Error(
+      "Server నుంచి JSON response రాలేదు. " +
+      "HTTP status: " + response.status
+    );
+  }
+
+  if (
+    !data ||
+    typeof data !== "object" ||
+    Array.isArray(data)
+  ) {
+    throw new Error("Server response సరిగా లేదు.");
+  }
+
+  return data;
+}
+
+async function loadPendingActions() {
+  const container = document.getElementById(
+    "pending-actions"
+  );
+
+  if (!container) return;
+
+  const requestId = ++pendingApprovalRequest;
+
+  try {
+    const response = await fetch(
+      "/api/pending-actions",
+      {
+        method: "GET",
+        headers: {
+          "Accept": "application/json"
+        },
+        credentials: "same-origin",
+        cache: "no-store"
+      }
+    );
+
+    const data = await approvalReadJson(response);
+
+    if (requestId !== pendingApprovalRequest) {
+      return;
+    }
+
+    if (
+      !response.ok ||
+      data.success !== true ||
+      !Array.isArray(data.actions)
+    ) {
+      throw new Error(
+        data.message || "Pending proposals load కాలేదు."
+      );
+    }
+
+    container.replaceChildren();
+
+    data.actions.forEach(action => {
+      if (
+        action.action_type !== "record_sale" ||
+        !action.preview ||
+        typeof action.preview !== "object"
+      ) {
+        return;
+      }
+
+      const preview = action.preview;
+
+      const card = approvalElement("div", "order");
+
+      card.appendChild(
+        approvalElement(
+          "b",
+          "",
+          "🧾 అమ్మకాన్ని సరిచూడండి"
+        )
+      );
+
+      const details = approvalElement("ul");
+
+      const lines = [
+        `వస్తువు: ${preview.product}`,
+        `పరిమాణం: ${preview.quantity} ${preview.unit}`,
+        `యూనిట్ ధర: ${approvalMoney(preview.unit_price)}`,
+        `మొత్తం: ${approvalMoney(preview.total)}`,
+        `Payment: ${preview.payment_method}`,
+        (
+          "ఆమోదిస్తే stock: " +
+          `${preview.stock_before} → ` +
+          `${preview.stock_after} ${preview.unit}`
+        )
+      ];
+
+      if (preview.customer) {
+        lines.push(
+          `కస్టమర్: ${preview.customer}`,
+          (
+            "ఆమోదిస్తే బాకీ: " +
+            `${approvalMoney(preview.dues_before)} → ` +
+            approvalMoney(preview.dues_after)
+          )
+        );
+      }
+
+      lines.forEach(text => {
+        details.appendChild(
+          approvalElement("li", "", text)
+        );
+      });
+
+      card.appendChild(details);
+
+      const expiry = new Date(action.expires_at);
+
+      if (!Number.isNaN(expiry.getTime())) {
+        card.appendChild(
+          approvalElement(
+            "p",
+            "sub",
+            "గడువు: " +
+            expiry.toLocaleTimeString("en-IN")
+          )
+        );
+      }
+
+      card.appendChild(
+        approvalElement(
+          "p",
+          "sub",
+          "ఇంకా నమోదు కాలేదు. వివరాలు సరిగా ఉంటేనే Confirm చేయండి."
+        )
+      );
+
+      const buttons = approvalElement("div", "btns");
+
+      const confirmButton = approvalElement(
+        "button",
+        "ok",
+        "✅ Confirm sale"
+      );
+
+      confirmButton.type = "button";
+      confirmButton.disabled = pendingApprovalBusy;
+
+      confirmButton.addEventListener("click", () => {
+        submitPendingAction(action.id, "confirm");
+      });
+
+      const cancelButton = approvalElement(
+        "button",
+        "no",
+        "❌ Cancel"
+      );
+
+      cancelButton.type = "button";
+      cancelButton.disabled = pendingApprovalBusy;
+
+      cancelButton.addEventListener("click", () => {
+        submitPendingAction(action.id, "cancel");
+      });
+
+      buttons.append(
+        confirmButton,
+        cancelButton
+      );
+
+      card.appendChild(buttons);
+      container.appendChild(card);
+    });
+
+  } catch (error) {
+    if (requestId !== pendingApprovalRequest) {
+      return;
+    }
+
+    console.error("Pending proposals error:", error);
+
+    // Remove old actionable cards when refresh fails.
+    container.replaceChildren();
+
+    container.appendChild(
+      approvalElement(
+        "p",
+        "sub",
+        "⚠️ Pending proposals refresh కాలేదు. " +
+        "Page refresh చేసి మళ్లీ తనిఖీ చేయండి."
+      )
+    );
+  }
+}
+
+async function submitPendingAction(id, action) {
+  if (pendingApprovalBusy) return;
+
+  if (!["confirm", "cancel"].includes(action)) {
+    return;
+  }
+
+  const token = approvalCsrfToken();
+
+  if (!token) {
+    add(
+      "bot",
+      "❌ CSRF token అందుబాటులో లేదు. " +
+      "Page refresh చేసి మళ్లీ ప్రయత్నించండి."
+    );
+    return;
+  }
+
+  const question = action === "confirm"
+    ? "పైన చూపిన వివరాలతో ఈ sale నమోదు చేయాలా?"
+    : "ఈ sale proposalని cancel చేయాలా?";
+
+  if (!window.confirm(question)) {
+    return;
+  }
+
+  pendingApprovalBusy = true;
+  setApprovalButtonsDisabled(true);
+
+  try {
+    const response = await fetch(
+      "/api/pending-action",
+      {
+        method: "POST",
+        credentials: "same-origin",
+        mode: "same-origin",
+        cache: "no-store",
+        headers: {
+          "Accept": "application/json",
+          "Content-Type": "application/json",
+          "X-CSRFToken": token
+        },
+        body: JSON.stringify({
+          id,
+          action
+        })
+      }
+    );
+
+    const data = await approvalReadJson(response);
+
+    if (!response.ok || data.success !== true) {
+      add(
+        "bot",
+        "❌ " +
+        (
+          data.message ||
+          "Action నిర్ధారణ రాలేదు. తాజా వివరాలు చూడండి."
+        )
+      );
+      return;
+    }
+
+    if (action === "cancel") {
+      add(
+        "bot",
+        "✅ " +
+        (
+          data.message ||
+          "Proposal cancel అయింది. Stock/బాకీ మార్చలేదు."
+        )
+      );
+      return;
+    }
+
+    const result = data.result || {};
+
+    const lines = [
+      data.already_executed
+        ? "ℹ️ ఈ sale ఇప్పటికే నమోదు అయింది. మళ్లీ నమోదు చేయలేదు."
+        : "✅ Sale నమోదు అయింది."
+    ];
+
+    if (result.bill_no) {
+      lines.push(`బిల్: ${result.bill_no}`);
+    }
+
+    if (result.product) {
+      lines.push(
+        `${result.product}: ${result.quantity} ${result.unit || ""}`
+      );
+    }
+
+    if (result.total !== undefined) {
+      lines.push(
+        "మొత్తం: " + approvalMoney(result.total)
+      );
+    }
+
+    if (result.stock_left !== undefined) {
+      lines.push(
+        `మిగిలిన stock: ${result.stock_left} ${result.unit || ""}`
+      );
+    }
+
+    if (result.customer) {
+      lines.push(
+        `కస్టమర్: ${result.customer}`,
+        "మిగిలిన బాకీ: " +
+        approvalMoney(result.balance_left)
+      );
+    }
+
+    add("bot", lines.join("\n"));
+
+  } catch (error) {
+    console.error("Pending action error:", error);
+
+    add(
+      "bot",
+      "❌ Confirmation response పొందలేకపోయాను. " +
+      "Sale జరిగిందా తెలియకుండా కొత్త sale request పంపవద్దు. " +
+      "తాజా stock, బాకీ, bill history తనిఖీ చేయండి."
+    );
+
+  } finally {
+    await Promise.allSettled([
+      loadPendingActions(),
+      loadDash(),
+      loadOrders()
+    ]);
+
+    pendingApprovalBusy = false;
+    setApprovalButtonsDisabled(false);
+  }
+}
+
+// Load existing pending proposals when the page opens.
+loadPendingActions();
+  
+  
   </script>
 </body>
 </html>
