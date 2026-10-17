@@ -2,269 +2,340 @@
 
 ### A Telugu-first AI assistant for small kirana shops
 
-Manage stock, understand profit, track customer credit, and plan purchases through Telugu or English conversation—with owner approval before any business data changes.
+Ask about stock, sales, profit, and customer credit in Telugu or English. Prepare a sale through conversation, review the exact transaction, and confirm it before the server updates shop records.
 
-Built solo for the **Amazon Developer Hackathon 2026 — Alexa+ track**, using a self-hosted MCP server and a simulated assistant experience in a web app.
+Built solo for the Amazon Developer Hackathon 2026 — Alexa+ track.
 
-[Live Demo](https://dukanmitra.onrender.com) · [Demo Video](YOUR_DEMO_VIDEO_URL) · [Source Code](https://github.com/mangalapurivijayalakshmi/DukanMitra)
+[Live Demo](https://dukanmitra.onrender.com) · [Source Code](https://github.com/mangalapurivijayalakshmi/DukanMitra)
 
-> **Try the demo:** No login is required. The free-tier server may take 30–60 seconds to wake up. The hosted app uses demo data, which resets when the server restarts. AI features depend on Gemini API availability and quota.
+<!-- Add the public demo-video link here before submission:
+[Demo Video](YOUR_PUBLIC_VIDEO_URL)
+-->
+
+> No login is required for the hosted demonstration. The free-tier service may take 30–60 seconds to wake up. This is a shared, single-shop demo using illustrative data. Hosted data may reset when the service restarts or redeploys.
 
 ---
 
 ## The problem
 
-Small kirana shop owners often manage inventory, sales, and customer credit—also called *udhar*—using notebooks.
+Small kirana shop owners often track stock, sales, and customer credit—also called udhar—in notebooks.
 
-Answering everyday questions can require checking several records:
+Everyday questions can require checking several records:
 
-- What is running out?
-- How much profit did I make this week?
-- Which customer has overdue dues?
-- What should I order tomorrow?
-- How should I update stock from a supplier bill?
+- How much sugar is left?
+- What was this week's profit?
+- Which customers have overdue dues?
+- What should I reorder?
+- How should I enter items from a supplier bill?
 
-DukanMitra brings these tasks into a Telugu-first conversational interface, supported by a visual dashboard.
+DukanMitra combines a Telugu-first conversational assistant with a visual shop dashboard.
 
-## How it works
+The goal is to make routine shop information accessible in the owner's own language while keeping the owner in control of consequential actions.
 
-**Ask → Analyze → Recommend → Confirm**
+## Project status
 
-1. The owner asks a question in Telugu or English.
-2. The agent calls business tools to retrieve relevant records.
-3. It returns an answer or recommends an action.
-4. If the action changes business data, it asks for explicit owner confirmation before proceeding.
+The hosted web application includes:
 
-For example:
+- Telugu and English chat.
+- Business-data tools.
+- A shop dashboard.
+- A server-stored sale-proposal workflow.
+- Explicit Confirm/Cancel controls for conversational sales.
+- Supplier bill scanning and review.
+- Customer payment and WhatsApp workflows.
+- Stock-planning estimates.
+- Browser voice input and spoken replies.
+- PWA support.
 
-> **Owner:** రమేష్ కి 2 కిలో చక్కెర ఉద్దెర అమ్మాను  
-> *I sold 2 kg of sugar to Ramesh on credit.*
->
-> **Assistant:** Presents the proposed sale for review and confirmation.
->
-> **Owner:** Confirms.
->
-> **App:** Records the sale and updates the related stock and customer credit.
+A separate self-hosted MCP server exposes the shared business tools.
 
-Read-only questions do not require confirmation.
+### Alexa+ simulation boundary
 
-## Key features
+The browser application is a simulated assistant experience powered by Google Gemini.
+
+It is not a live Alexa+ integration.
+
+The web agent calls shared Python business logic directly. The MCP server exposes business tools to MCP clients such as MCP Inspector.
+
+The hosted website does not also host the separate MCP server.
+
+## Main workflow
+
+Ask → Analyze → Propose → Review → Confirm → Execute
+
+For conversational sales:
+
+1. The owner describes a sale.
+2. The agent calls a proposal tool.
+3. The server validates the product, quantity, payment method, and customer.
+4. The server stores a pending action with its exact arguments and review preview.
+5. The interface displays a sale-review card.
+6. The owner selects Confirm sale or Cancel.
+7. The confirmation endpoint validates the stored proposal before execution.
+
+The model does not directly execute the sale.
+
+### Example
+
+Owner:
+
+> రమేష్ కి 2 కిలో చక్కెర ఉద్దెర అమ్మాను  
+> I sold 2 kg of sugar to Ramesh on credit.
+
+The review card shows:
+
+```text
+Item: Sugar
+Quantity: 2 kg
+Total: ₹90
+Payment: Credit
+Customer: Ramesh
+
+If approved:
+Stock: 5 → 3 kg
+Customer dues: ₹1,200 → ₹1,290
+
+[Confirm sale] [Cancel]
+```
+
+These numbers are an example from demo testing. Actual values come from the current database.
+
+Typing “yes” or “అవును” alone does not execute a sale. The owner uses the review card.
+
+## Features
 
 ### Telugu and English assistant
 
-- Telugu and English chat.
-- Telugu voice input using browser speech APIs (`te-IN`).
-- Spoken replies using browser speech synthesis.
-- Gemini function calling with per-session conversation memory.
-- Answers grounded in business tools rather than invented figures.
+- Telugu-first responses, with English available when requested.
+- Database tools for stock, prices, sales, credit, and profit questions.
+- Gemini function calling.
+- Telugu voice input using browser speech recognition.
+- Spoken responses using browser speech synthesis.
 
-Voice availability and quality depend on the browser and device.
+The current chat implementation handles self-contained requests. It does not retain multi-turn conversation history.
 
-### Business dashboard
+Voice support and Telugu voice availability vary by browser and device.
 
-- Revenue, cost of goods, expenses, and net profit shown separately.
-- Sales charts with 7-day and 30-day views.
+### Shop dashboard
+
+- Today's revenue and sale count.
+- Revenue for the selected reporting period.
+- Sales charts with 1-day, 7-day, and 30-day options.
 - Best-selling products.
-- Low-stock indicators comparing current stock with minimum levels.
-- Expiry warnings.
-- Stock and billing history through business tools.
+- Low-stock indicators.
+- Out-of-stock alerts.
+- Customer credit balances.
+- Credit-ageing indicators and overdue warnings.
+- Revenue, cost of goods, expenses, and net profit displayed separately.
+- Product expiry alerts.
 
-### Customer credit management
+### Conversational sale approval
 
-- Customer balances and credit ageing.
-- Colour-coded pending dues.
-- Warnings for dues pending more than 30 days.
-- Owner-confirmed payment entry.
+- Server-stored pending proposals.
+- Product and customer IDs stored with transaction arguments.
+- A reviewable preview of quantity, price, total, stock, and credit changes.
+- Browser-session binding.
+- Ten-minute proposal validity.
+- Confirm and Cancel controls.
+- Validation of current business data before execution.
+- Stored execution results.
+- Sequential duplicate-confirm handling for an executed proposal.
+
+### Customer credit
+
+- Customer balances and days pending.
+- Warnings for dues pending 30 days or more.
+- Dashboard payment entry.
 - WhatsApp reminder links with prefilled messages.
 
-### Stock planning and supplier orders
+WhatsApp links open a message for the owner to review and send. They do not automatically send messages through the WhatsApp Business API.
 
-- Estimated stock-out predictions.
+### Stock planning
+
+- Estimated stock-out timing.
 - Suggested reorder quantities.
-- Reorder drafts, owner approval, and delivery tracking.
+- Supplier reorder drafts.
+- Reorder approval and delivery business tools.
 - WhatsApp supplier-order links.
-- Festival stock suggestions for Dasara, Diwali, Sankranti, and Ugadi.
+- Festival stock suggestions.
 
-Forecasts and suggested quantities are estimates, not guarantees.
+Forecasts, suggested quantities, and festival demand increases are estimates.
 
 ### Supplier bill scanning
 
 1. Upload a supplier bill photo.
-2. Gemini vision extracts the items and quantities.
-3. The owner reviews the extracted information.
-4. Stock changes only after owner confirmation.
+2. Gemini vision extracts items and quantities.
+3. Review the extracted information.
+4. Approve stock entry through the dashboard workflow.
 
-### Installable web experience
+AI extraction can contain errors. Product matching, quantities, and units must be checked before approval.
 
-- Mobile-responsive dashboard.
-- Installable PWA.
-- No login required for the hosted demo.
+### Installable web app
 
-## Demo video
-
-[Watch the project demonstration](YOUR_DEMO_VIDEO_URL)
-
-The demo covers:
-
-- A Telugu business question.
-- A credit sale with owner confirmation.
-- Estimated reorder advice.
-- Supplier bill scanning and review.
-- A working MCP tool call in MCP Inspector.
-
-> Replace `YOUR_DEMO_VIDEO_URL` with the final video link before submission.
+- Responsive layout.
+- Web app manifest and service worker.
+- PWA installation where supported by the browser.
 
 ## Screenshots
 
-### Dashboard and conversational sale
+### Dashboard overview
 
-| Dashboard | Credit sale with confirmation |
-|---|---|
-| ![DukanMitra dashboard](docs/dashboard.png) | ![Credit sale confirmation in chat](docs/chat-sale.png) |
+![DukanMitra dashboard overview](docs/dashboard-details.png)
 
-### Supplier bill to stock entry
+### Sale review before confirmation
 
-| Upload a supplier bill | Review before updating stock |
-|---|---|
-| ![Supplier bill photo](docs/bill-scan1.png) | ![Extracted bill items awaiting review](docs/bill-scan.png) |
+The owner reviews the proposed sale before any sale-related changes are made.
 
-### Mobile and MCP tools
+![Sale review with Confirm and Cancel buttons](docs/chat-sale.png)
 
-| Mobile interface | MCP Inspector |
-|---|---|
-| ![Mobile interface](docs/mobile.png) | ![Business tools in MCP Inspector](docs/mcp_inspector.png) |
+### Confirmed sale
 
-## MCP server and Alexa+ track approach
+The result is shown after the owner confirms the sale.
 
-DukanMitra includes a self-hosted MCP server implemented in `mcp_server.py`.
-
-- Framework: FastMCP.
-- Transport: Streamable HTTP.
-- Endpoint: `/mcp`.
-- Local port: `8000`.
-- Business tools exposed: 20.
-
-The tools cover:
-
-- Stock and pricing.
-- Sales and best sellers.
-- Customer credit and payments.
-- Expenses and profit summaries.
-- Stock and bill history.
-- Expiry alerts.
-- Stock-out prediction and reorder advice.
-- Reorder drafting, approval, and delivery.
-- Sale recording.
-
-### Simulation boundary
-
-The browser app demonstrates a **simulated Alexa+ assistant experience** powered by Gemini. It is not a live Alexa+ integration.
-
-The web agent calls the shared Python business-tool layer directly. The MCP server exposes that same business logic to MCP clients such as MCP Inspector.
-
-The hosted demo runs the web application. The MCP server is demonstrated separately using the local setup below.
+![Confirmed sale result](docs/sale-confirmed.png)
 
 ## Architecture
 
 ```text
 Browser
-PWA · Telugu/English chat · Voice input/output
+Dashboard · Telugu/English chat · Voice · PWA
         |
         v
-Django views
-agent_api/views.py
+Django views and API endpoints
+        |
+        +--> Gemini agent
+        |       |
+        |       +--> Read-only business tools
+        |       |
+        |       +--> Sale proposal tool
+        |                   |
+        |                   v
+        |              PendingAction
+        |                   |
+        +--> Owner Confirm/Cancel endpoint
+                            |
+                            v
+                    Approval service
+                            |
+                            v
+                 Django ORM + SQLite
+
+
+Separate MCP client
         |
         v
-Gemini agent
-agent_api/agent.py
+Self-hosted MCP server
         |
         v
-Shared business tools <------------ MCP server
-agent_api/tools.py                   mcp_server.py
-        |                               ^
-        v                               |
-Django ORM                         MCP client
-        |                         e.g. Inspector
+Shared business tools
+        |
         v
-SQLite database
-shop/models.py
+Django ORM + SQLite
 ```
 
-Both interfaces use the same business logic:
+### Important architectural distinction
 
-```text
-Web: Browser → Django → Gemini agent → business tools → database
+The web agent does not route every request through MCP.
 
-MCP: MCP client → MCP server → business tools → database
-```
+The web application and MCP server reuse business-tool code, but the conversational sale-approval service is a separate application-controlled execution path.
 
-### Main files
+## Main files
 
-| File or directory | Responsibility |
+| File | Responsibility |
 |---|---|
-| `mcp_server.py` | MCP server and tool exposure |
-| `agent_api/tools.py` | Shared business logic |
-| `agent_api/agent.py` | Gemini agent and function calling |
-| `agent_api/bill.py` | Bill extraction and owner-approved stock entry |
-| `agent_api/festival.py` | Festival stock suggestions |
+| `agent_api/agent.py` | Gemini requests, read tools, customer aliases, sale proposals |
+| `agent_api/approvals.py` | Session-bound sale confirmation, cancellation, and execution |
 | `agent_api/views.py` | Web views and API endpoints |
-| `agent_api/templates/chat.html` | Dashboard and chat interface |
-| `shop/models.py` | Business data models |
-| `shop/seed_data.py` | Demo data |
+| `agent_api/urls.py` | Application routes |
+| `agent_api/tools.py` | Shared business functions |
+| `agent_api/bill.py` | Bill extraction and stock-entry logic |
+| `agent_api/festival.py` | Festival stock suggestions |
+| `agent_api/templates/chat.html` | Dashboard, chat, and review controls |
+| `agent_api/test_approval_safety.py` | Automated approval safety tests |
+| `shop/models.py` | Shop records and pending-action model |
+| `shop/migrations/` | Database schema migrations |
+| `shop/seed_data.py` | Demonstration dataset |
+| `mcp_server.py` | Self-hosted MCP server |
 
-## Safety and data integrity
+## Sale-approval safety
 
-### Owner approval before changes
+### Server-stored proposals
 
-Data-changing actions require explicit owner confirmation, including:
+Transaction arguments and the owner-facing preview are stored in the database rather than reconstructed from a later model response.
 
-- Recording a sale.
-- Recording a customer payment.
-- Adding an expense.
-- Approving a reorder.
-- Marking an order as delivered.
-- Adding stock from a scanned supplier bill.
+### Session binding
 
-### Tool-backed numbers
+The approval API uses the Django server session.
 
-Business figures come from database tools rather than model-generated guesses.
+It does not accept a browser-supplied session identifier as the authority to execute another session's proposal.
 
-### Clear financial reporting
+Session binding is not authentication. This remains a public, single-shop demonstration.
 
-Revenue is not presented as profit. The dashboard separates:
+### Expiry and state checks
 
-- Revenue.
-- Cost of goods.
-- Expenses.
-- Net profit.
+The approval service checks proposal ownership, expiry, action type, and status.
 
-### Clearly labelled estimates
+Executed and cancelled proposals are not treated as new pending sales.
 
-Stock-out forecasts, reorder quantities, and festival recommendations are estimates based on available demo data.
+### Fresh business-data validation
 
-### Human review of bill extraction
+The service validates current product and customer data against the reviewed preview.
 
-AI-extracted bill information is presented for review before it changes stock.
+If relevant values change, it rejects the stale proposal rather than silently executing different terms.
+
+### Transactional execution
+
+The sale record, stock deduction, customer credit update, stock movement, and proposal execution result are handled within a database transaction.
+
+Conditional updates are also used in the execution path.
+
+### Scope of this protection
+
+This server-stored approval workflow currently covers conversational sales.
+
+It does not yet provide uniform approval enforcement across every dashboard and MCP write operation.
+
+The current web agent does not expose direct payment, expense, reorder-approval, or delivery write tools to the model. Other interfaces may still expose those capabilities.
+
+## Verification completed
+
+### Manual local checks
+
+- Creating a sale proposal left stock and customer dues unchanged.
+- Confirming a proposal recorded a sale and updated related records.
+- Cancelling a proposal left business data unchanged.
+- Confirming an already-executed proposal again returned the stored result without another sale.
+
+### Automated service tests
+
+Three tests cover:
+
+1. An expired proposal cannot execute.
+2. A different session cannot confirm the owner's proposal.
+3. A different session cannot cancel the owner's proposal.
+
+These are service-level tests. They do not establish full HTTP/CSRF coverage, concurrent-request correctness, or protection of every write path.
 
 ## Technology stack
 
 | Layer | Technology |
 |---|---|
-| Backend | Python, Django |
+| Language | Python |
+| Web backend | Django |
 | Demo database | SQLite |
-| AI agent | Google Gemini function calling |
-| Bill extraction | Gemini vision |
-| MCP server | FastMCP, Streamable HTTP |
-| Voice | Browser speech recognition and synthesis |
+| AI | Google Gemini, Google Gen AI SDK |
+| MCP | FastMCP, Streamable HTTP |
+| Frontend | HTML, CSS, JavaScript |
+| Voice | Browser speech APIs |
 | Messaging handoff | WhatsApp deep links |
-| Web experience | Responsive UI, PWA |
-| Hosting | Render, Gunicorn |
+| Web server | Gunicorn |
+| Hosting | Render |
 
-WhatsApp links open prefilled messages. They do not automatically send messages through the WhatsApp Business API.
+The verified development/deployment setup uses Python 3.13.5 and Django 6.1.2.
+
+Dependency versions are recorded in `requirements.txt`.
 
 ## Run locally
-
-Python 3.12 is recommended.
 
 ### 1. Clone the repository
 
@@ -273,15 +344,15 @@ git clone [https://github.com/mangalapurivijayalakshmi/DukanMitra.git](https://g
 cd DukanMitra
 ```
 
-### 2. Create and activate a virtual environment
+### 2. Create a virtual environment
 
 ```bash
 python -m venv venv
 ```
 
-Windows:
+Windows Command Prompt:
 
-```powershell
+```bat
 venv\Scripts\activate
 ```
 
@@ -294,45 +365,52 @@ source venv/bin/activate
 ### 3. Install dependencies
 
 ```bash
-pip install -r requirements.txt
+python -m pip install -r requirements.txt
 ```
 
-### 4. Configure the environment
+### 4. Create `.env`
 
 Create a `.env` file in the project root:
 
 ```env
+DEBUG=True
+SECRET_KEY=replace-with-your-own-random-secret
 GEMINI_API_KEY=your-gemini-api-key
+
+ALLOWED_HOSTS=127.0.0.1,localhost
+CSRF_TRUSTED_ORIGINS=http://127.0.0.1:8001,http://localhost:8001
+
+TRUST_PROXY_SSL_HEADER=False
+SESSION_COOKIE_SECURE=False
+CSRF_COOKIE_SECURE=False
+SECURE_SSL_REDIRECT=False
 ```
 
-Do not commit API keys or other secrets to the repository.
+Generate a Django secret with:
 
-### 5. Set up the database
+```bash
+python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
+```
+
+Do not commit `.env`, API keys, or other secrets.
+
+The agent's model can be overridden using the optional `GEMINI_MODEL` environment variable.
+
+### 5. Apply migrations
 
 ```bash
 python manage.py migrate
+```
+
+### 6. Load demonstration data
+
+```bash
 python manage.py shell -c "from shop.seed_data import run; run()"
 ```
 
-This loads the demonstration dataset.
-
-### 6. Start the MCP server
-
-In terminal 1:
-
-```bash
-python mcp_server.py
-```
-
-MCP endpoint:
-
-```text
-http://127.0.0.1:8000/mcp
-```
+Use the seed command for a disposable demo database, not a database containing real shop records.
 
 ### 7. Start the web app
-
-In terminal 2, activate the same virtual environment and run:
 
 ```bash
 python manage.py runserver 8001
@@ -341,12 +419,46 @@ python manage.py runserver 8001
 Open:
 
 ```text
-http://127.0.0.1:8001
+http://127.0.0.1:8001/
 ```
 
-### 8. Inspect the MCP tools
+Use the same browser profile and hostname throughout a proposal/confirmation test.
 
-With Node.js and npm available, run:
+### 8. Run the safety tests
+
+```bash
+python manage.py test agent_api.test_approval_safety --verbosity 2
+```
+
+Additional checks:
+
+```bash
+python manage.py check
+python manage.py makemigrations shop --check --dry-run
+python -m pip check
+```
+
+## MCP server
+
+The MCP server is a separate process.
+
+- Implementation: `mcp_server.py`
+- Framework: FastMCP
+- Transport: Streamable HTTP
+- Local endpoint: `http://127.0.0.1:8000/mcp`
+- Registered business tools: 20
+
+### Start the server
+
+In a separate terminal, activate the virtual environment and run:
+
+```bash
+python mcp_server.py
+```
+
+### Inspect the tools
+
+With Node.js and npm available:
 
 ```bash
 npx @modelcontextprotocol/inspector
@@ -354,54 +466,126 @@ npx @modelcontextprotocol/inspector
 
 In MCP Inspector:
 
-1. Select **Streamable HTTP**.
+1. Select Streamable HTTP.
 2. Enter `http://127.0.0.1:8000/mcp`.
-3. Connect to the server.
-4. Open the tools list.
-5. Execute a read-only tool to inspect its response.
+3. Connect.
+4. List the tools.
+5. Execute a read-only tool.
 
-## Testing guide for judges
+Example:
 
-### Hosted web demo
+```text
+Tool: get_stock
+product_name: Sugar
+```
 
-Open [DukanMitra](https://dukanmitra.onrender.com). Allow up to 60 seconds for the initial load.
+Example response:
 
-Try these prompts:
+```json
+{
+  "found": true,
+  "product": "చక్కెర",
+  "stock": 3,
+  "unit": "kg",
+  "is_low": true
+}
+```
+
+Actual values depend on the current database.
+
+### Registered tools
+
+```text
+get_stock
+get_price
+low_stock_items
+today_sales
+pending_credit
+predict_stockout
+draft_reorder
+approve_reorder
+daily_summary
+customer_credit
+best_sellers
+record_sale
+record_payment
+add_expense
+profit_summary
+smart_reorder_advice
+mark_delivered
+expiry_alerts
+stock_history
+bill_history
+```
+
+### MCP safety boundary
+
+The MCP server includes data-changing tools.
+
+Those direct tools are not yet uniformly protected by the web sale-proposal approval service. Tool descriptions asking for confirmation are not equivalent to server-enforced approval.
+
+Use a disposable demo database for MCP testing. Do not expose the write-capable MCP server publicly or connect it to real shop data without authentication, authorization, and appropriate approval enforcement.
+
+## Judge testing guide
+
+### A. Open the hosted app
+
+Visit:
+
+```text
+[https://dukanmitra.onrender.com](https://dukanmitra.onrender.com)
+```
+
+Allow time for the free-tier service to wake up.
+
+### B. Ask a read-only question
+
+```text
+ఈ వారం లాభం ఎంత?
+```
+
+Meaning:
+
+```text
+What is this week's profit?
+```
+
+Other examples:
 
 | Telugu prompt | English meaning |
 |---|---|
-| `ఈ వారం లాభం ఎంత?` | What is this week's profit? |
+| `బియ్యం స్టాక్ ఎంత ఉంది?` | How much rice is in stock? |
 | `రేపు ఏం కొనాలి?` | What should I buy tomorrow? |
 | `ఎవరి బాకీ ఎక్కువ రోజులుగా ఉంది?` | Whose dues have been pending the longest? |
-| `రాబోయే పండుగకు ఏం కొనాలి?` | What should I stock for the next festival? |
-| `రమేష్ కి 2 కిలో చక్కెర ఉద్దెర అమ్మాను` | I sold 2 kg of sugar to Ramesh on credit. |
+| `రాబోయే పండుగకు ఏం కొనాలి?` | What should I stock for the upcoming festival? |
 
-### Verify the confirmation flow
+### C. Test cancellation
 
-1. Note the relevant stock level and customer balance.
-2. Request a credit sale.
-3. Review the proposed transaction.
-4. Confirm that no business data changes before approval.
-5. Approve the transaction.
-6. Check the updated stock and customer balance.
+1. Ask: `రమేష్ కి 1 కిలో చక్కెర ఉద్దెర అమ్మాను`.
+2. Review the proposed sale.
+3. Note the displayed stock and credit balance.
+4. Select Cancel.
+5. Verify that no sale-related stock or credit change occurred.
 
-### Explore the dashboard
+### D. Test confirmation
 
-- Review sales, profit, and low-stock information.
-- Open a customer reminder through WhatsApp.
-- Use the payment button to review and confirm a payment.
-- Upload a supplier bill photo.
-- Review the extracted items before confirming stock entry.
+1. Submit a new sale request.
+2. Review quantity, price, total, customer, and proposed changes.
+3. Select Confirm sale.
+4. Approve the browser confirmation.
+5. Check the bill number and updated dashboard values.
 
-### Test MCP separately
+Typing “అవును” alone does not confirm a sale.
 
-Follow the local setup and connect MCP Inspector to `/mcp`.
+### E. Test MCP separately
 
-The hosted website and local MCP endpoint are separate demonstration surfaces.
+Run the local MCP server and connect MCP Inspector as described above.
+
+The hosted web demo and local MCP server are separate testing surfaces.
 
 ## Deployment
 
-The web application is hosted on Render.
+The web app is hosted on Render.
 
 ### Build command
 
@@ -409,91 +593,116 @@ The web application is hosted on Render.
 pip install -r requirements.txt
 ```
 
-### Start command
+### Demo start command
 
 ```bash
-python manage.py migrate && python manage.py shell -c "from shop.seed_data import run; run()" && gunicorn config.wsgi:application --bind 0.0.0.0:$PORT --workers 2 --timeout 120
+python manage.py migrate && python manage.py shell -c "from shop.seed_data import run; run()" && gunicorn config.wsgi:application --bind 0.0.0.0:$PORT --workers 1 --timeout 120
 ```
 
-### Environment variables
+This command seeds demonstration data during startup. It is not intended as a production data-management strategy.
+
+### Environment configuration
 
 ```text
-GEMINI_API_KEY
-SECRET_KEY
+PYTHON_VERSION=3.13.5
 DEBUG=False
-ALLOWED_HOSTS
-CSRF_TRUSTED_ORIGINS
+ALLOWED_HOSTS=dukanmitra.onrender.com
+CSRF_TRUSTED_ORIGINS=[https://dukanmitra.onrender.com](https://dukanmitra.onrender.com)
+TRUST_PROXY_SSL_HEADER=True
+SESSION_COOKIE_SECURE=True
+CSRF_COOKIE_SECURE=True
+SECURE_SSL_REDIRECT=True
 ```
 
-Configure hostnames and trusted origins for the deployed environment.
+Also configure secret values for:
 
-### Demo deployment boundary
+```text
+SECRET_KEY
+GEMINI_API_KEY
+```
 
-- This deployment runs the web app, not the separate MCP server.
-- The free-tier service may sleep when idle.
-- SQLite demo data is not persistent across hosted restarts.
-- The startup command loads demo data.
-- This configuration is intended for demonstration, not a production shop.
+The proxy-header setting assumes deployment behind the trusted hosting proxy.
+
+### Hosted-demo boundaries
+
+- The deployment runs the web application.
+- The MCP server is demonstrated separately.
+- SQLite is used for demonstration.
+- Hosted records may reset on restart or redeployment.
+- The public demo is shared between visitors.
+- A browser refresh is not the same as a service restart.
+
+## Known limitations
+
+- No login, owner authentication, or multi-shop isolation.
+- Session-bound proposals do not make a public shared shop private.
+- No retained multi-turn chat history in the current agent.
+- Customer aliases are explicit mappings for the demo dataset, not general transliteration.
+- Alias handling is not yet unified across all read and write tools.
+- Approval enforcement is not uniform across every dashboard and MCP write path.
+- Money fields currently use floating-point storage.
+- Profit uses current product purchase prices, not historical sale-time cost snapshots.
+- Credit sales update customer balances, but the current Sale model has no direct customer relationship.
+- Sales-history windows are not yet fully standardized across all analytics and forecasting tools.
+- Bill extraction and unit interpretation require careful human review.
+- Forecasts use limited sales history and are not guarantees.
+- Festival dates and demand suggestions use demonstration assumptions.
+- Browser voice and installation support vary.
+- AI features depend on Gemini quota and availability.
+- Offline-caching behaviour and broader concurrency scenarios need additional review.
+- The current tests do not provide complete HTTP, CSRF, load, or multi-process coverage.
 
 ## Work completed during the hackathon
 
-The following components were built during the hackathon submission period:
+Development during the submission period includes:
 
-- Django data models and demo dataset.
-- Shared business-tool layer.
+- Django models and demonstration data.
+- Shared shop business tools.
 - Self-hosted MCP server.
-- Gemini conversational agent.
-- Telugu and English chat.
-- Dashboard and sales visualisations.
-- Customer credit ageing and payment workflows.
+- Gemini agent.
+- Telugu and English interface.
+- Sales, stock, profit, and credit dashboard.
+- Customer credit-ageing indicators.
 - WhatsApp reminder and supplier-order links.
-- Supplier bill scanning and review.
-- Stock-out estimates and reorder suggestions.
-- Festival stock suggestions.
+- Bill-photo extraction and review.
+- Stock-planning and festival estimates.
 - Browser voice interaction.
-- PWA support and hosted deployment.
+- PWA support.
+- Server-stored conversational sale proposals.
+- Confirm/Cancel execution service.
+- Approval safety tests.
+- Render deployment.
 
-## Development friction and fallback
+## Development friction
 
-Amazon Bedrock was attempted, but model invocation was blocked on the free-plan account used for this project.
+Amazon Bedrock was attempted, but model invocation was blocked on the account used for this project.
 
-Gemini was used for the working agent and bill extraction.
+Gemini was used for the working assistant and bill extraction.
 
-See [the friction log](docs/friction_log.md) for the attempted setup, observed errors, and workaround.
-
-## Current limitations
-
-- Demonstration data only; purchase prices are illustrative.
-- No authentication or multi-shop isolation.
-- The public demo is a shared, single-shop environment.
-- Hosted SQLite data resets when the server restarts.
-- AI features depend on Gemini API quota and availability.
-- Voice support varies by browser and device.
-- Bill extraction can contain errors and requires owner review.
-- Forecasts use limited sales history and are not guarantees.
-- Festival dates and quantities use a demo calendar and recent sales.
-- WhatsApp links require the owner to complete the sending action.
-- The MCP server is run separately from the hosted web app.
-- The project demonstrates an Alexa+ simulation, not a live Alexa+ integration.
+See [the friction log](docs/friction_log.md) for recorded setup attempts, errors, and the fallback approach.
 
 ## Future work
 
-- Authentication and shop-level access control.
-- PostgreSQL and persistent storage.
-- Automated tests for business tools and approval workflows.
-- UPI payment links.
-- PDF receipts.
-- Longer-history demand forecasting.
-- More Indian languages.
-- Production-ready MCP hosting and access controls.
+- Authentication and shop-level authorization.
+- Persistent PostgreSQL storage.
+- Unified approval enforcement across all write interfaces.
+- HTTP/CSRF integration and concurrency tests.
+- Persistent, bounded conversation history.
+- Shared customer/product alias resolution.
+- Decimal money fields.
+- Sale-time cost snapshots and customer-linked credit-sale records.
+- Stronger bill schema validation and explicit unit conversion.
+- Consistent analytics date ranges.
+- Production-ready MCP access controls.
+- UPI links, PDF receipts, and more Indian languages.
 
 ## Author
 
-**Mangalapuri Vijayalakshmi**
+Mangalapuri Vijayalakshmi
 
 Solo developer of DukanMitra.
 
-[GitHub](https://github.com/mangalapurivijayalakshmi) · [Project repository](https://github.com/mangalapurivijayalakshmi/DukanMitra)
+[GitHub](https://github.com/mangalapurivijayalakshmi) · [Repository](https://github.com/mangalapurivijayalakshmi/DukanMitra)
 
 ## License
 
