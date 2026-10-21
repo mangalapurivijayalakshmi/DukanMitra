@@ -6,11 +6,9 @@ Ask about stock, sales, profit, and customer credit in Telugu or English. Prepar
 
 Built solo for the Amazon Developer Hackathon 2026 — Alexa+ track.
 
-[Live Demo](https://dukanmitra.onrender.com) · [Source Code](https://github.com/mangalapurivijayalakshmi/DukanMitra)
+[Live Demo](https://dukanmitra.onrender.com) · [Source Code](https://github.com/mangalapurivijayalakshmi/DukanMitra) · [Demo Video](https://youtu.be/njR2iEOh47s)
 
-<!-- Add the public demo-video link here before submission:
-[Demo Video](YOUR_PUBLIC_VIDEO_URL)
--->
+---
 
 > No login is required for the hosted demonstration. The free-tier service may take 30–60 seconds to wake up. This is a shared, single-shop demo using illustrative data. Hosted data may reset when the service restarts or redeploys.
 
